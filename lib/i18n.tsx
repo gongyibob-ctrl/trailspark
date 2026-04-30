@@ -107,6 +107,25 @@ export const STRINGS = {
   // Permit pill / tags
   "tag.permit":                 { en: "Permit", zh: "需许可" },
 
+  // Wildfire warning
+  "fire.title":                 { en: "Active wildfire nearby", zh: "附近有活跃野火" },
+  "fire.distance":              { en: "{name} · {km} km away · {contained}% contained",
+                                   zh: "{name} · 距此 {km} 公里 · 已控制 {contained}%" },
+  "fire.acres":                 { en: "{n} acres", zh: "{n} 英亩" },
+  "fire.dataSource":             { en: "Live data: NIFC", zh: "实时数据：NIFC" },
+  "fire.checkBefore":           { en: "Check official park alerts before going.", zh: "出发前请查询公园官方警报。" },
+
+  // Permit info
+  "permit.heading":             { en: "Permit details", zh: "许可详情" },
+  "permit.authority":           { en: "Issued by", zh: "签发机构" },
+  "permit.window":              { en: "Application window", zh: "申请时间" },
+  "permit.demand":              { en: "Demand", zh: "竞争激烈程度" },
+  "permit.applyButton":         { en: "Apply on official site", zh: "前往官方申请" },
+  "permit.demand.low":          { en: "Low — usually available", zh: "低 · 通常都有名额" },
+  "permit.demand.moderate":     { en: "Moderate — book early", zh: "中等 · 建议早申请" },
+  "permit.demand.high":         { en: "High — competitive", zh: "高 · 竞争激烈" },
+  "permit.demand.lottery":      { en: "Very high — lottery only", zh: "极高 · 仅抽签" },
+
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
   "difficulty.moderate":        { en: "Moderate",  zh: "中等" },

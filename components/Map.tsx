@@ -15,6 +15,7 @@ import {
   hasGeometry,
   loadGeometries,
 } from "@/lib/geometries";
+import { fetchActiveFires } from "@/lib/wildfire";
 
 interface MapProps {
   trails: Trail[];
@@ -33,6 +34,9 @@ const LINE_LAYER_BASE = "trail-line-base";
 const LINE_LAYER_HOVER = "trail-line-hover";
 const LINE_LAYER_SELECTED = "trail-line-selected";
 const TERRAIN_SOURCE_ID = "terrain-dem";
+const FIRE_SOURCE_ID = "wildfire";
+const FIRE_LAYER_FILL = "wildfire-fill";
+const FIRE_LAYER_LINE = "wildfire-line";
 
 // Inline SVG glyphs used inside the pin. Hand-tuned for legibility at 9–12 px;
 // stroke comes from CSS, white needle fill is set inline.
@@ -182,6 +186,69 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
 
+    // Wildfire layer setup helper — runs after style load
+    const addWildfireLayers = async () => {
+      try {
+        const fires = await fetchActiveFires();
+        if (!map.getSource(FIRE_SOURCE_ID)) {
+          map.addSource(FIRE_SOURCE_ID, { type: "geojson", data: fires });
+          map.addLayer({
+            id: FIRE_LAYER_FILL,
+            type: "fill",
+            source: FIRE_SOURCE_ID,
+            paint: {
+              "fill-color": "#dc2626",
+              "fill-opacity": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                4, 0.18,
+                10, 0.32,
+              ],
+            },
+          });
+          map.addLayer({
+            id: FIRE_LAYER_LINE,
+            type: "line",
+            source: FIRE_SOURCE_ID,
+            paint: {
+              "line-color": "#dc2626",
+              "line-width": 1.5,
+              "line-opacity": 0.9,
+            },
+          });
+
+          map.on("mouseenter", FIRE_LAYER_FILL, () => {
+            map.getCanvas().style.cursor = "help";
+          });
+          map.on("mouseleave", FIRE_LAYER_FILL, () => {
+            map.getCanvas().style.cursor = "";
+          });
+          const firePopup = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            maxWidth: "240px",
+            offset: 8,
+          });
+          map.on("mousemove", FIRE_LAYER_FILL, (e) => {
+            const f = e.features?.[0];
+            if (!f) return;
+            const p = f.properties as { name?: string; acres?: number; contained?: number };
+            firePopup
+              .setLngLat(e.lngLat)
+              .setHTML(
+                `<div style="font-weight:600;color:#fca5a5;font-size:13px;">🔥 ${p.name ?? "Active fire"}</div>
+                 <div style="opacity:0.75;margin-top:2px;">${(p.acres ?? 0).toLocaleString()} acres · ${p.contained ?? 0}% contained</div>`,
+              )
+              .addTo(map);
+          });
+          map.on("mouseleave", FIRE_LAYER_FILL, () => firePopup.remove());
+        }
+      } catch (e) {
+        console.warn("[Map] wildfire fetch failed:", e);
+      }
+    };
+
     map.on("load", () => {
       console.log("[Map] style loaded");
 
@@ -271,6 +338,9 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
           layout: { "line-cap": "round", "line-join": "round" },
         });
       }
+
+      // Wildfire perimeters (after lines so they sit above)
+      addWildfireLayers();
 
       // Cursor + click on lines
       map.on("click", LINE_LAYER_BASE, (e) => {

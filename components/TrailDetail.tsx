@@ -16,6 +16,7 @@ import {
   Heart,
   Link2,
   Check,
+  Flame,
 } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
@@ -33,6 +34,8 @@ import {
   weatherEmoji,
   weatherLabel,
 } from "@/lib/weather";
+import { fetchActiveFires, nearbyFires, type NearbyFire } from "@/lib/wildfire";
+import { getPermitInfo } from "@/lib/permits";
 import {
   bestMonths as computeBestMonths,
   initialDateForBestSeasons,
@@ -60,6 +63,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   const [forecast, setForecast] = useState<ForecastDay[] | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [fireWarnings, setFireWarnings] = useState<NearbyFire[]>([]);
 
   // Track if user has manually changed date for the current trail — if not, reset on trail switch
   const userEditedRef = useRef(false);
@@ -73,6 +77,22 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
     setArchive(null);
     setForecast(null);
     setWeatherError(null);
+  }, [trail?.id]);
+
+  // Check for nearby active wildfires whenever the trail changes
+  useEffect(() => {
+    if (!trail) return;
+    let cancelled = false;
+    fetchActiveFires()
+      .then((fc) => {
+        if (cancelled) return;
+        const list = nearbyFires(fc, [trail.trailhead.lng, trail.trailhead.lat], 50);
+        setFireWarnings(list.slice(0, 3));
+      })
+      .catch(() => setFireWarnings([]));
+    return () => {
+      cancelled = true;
+    };
   }, [trail?.id]);
 
   useEffect(() => {
@@ -197,10 +217,18 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           <Stat icon={<Mountain className="h-3.5 w-3.5" />} label={t("stats.state")} value={trail.state} />
         </div>
 
+        {/* Wildfire warning — only when fires are nearby */}
+        {fireWarnings.length > 0 && <FireWarning fires={fireWarnings} />}
+
         {/* Description */}
         <Section title={t("section.about")} accent="neutral" delay={1}>
           <p className="text-[13.5px] leading-relaxed text-white/80">{trailDescription}</p>
         </Section>
+
+        {/* Permit info — only when this trail needs a permit */}
+        {trail.permitRequired && getPermitInfo(trail.id) && (
+          <PermitInfoCard trailId={trail.id} />
+        )}
 
         {/* Elevation profile */}
         <Section title={t("section.elevation")} accent="forest" delay={2}>
@@ -773,6 +801,89 @@ function WeatherSkeleton() {
     <div className="space-y-3">
       <div className="h-32 animate-pulse rounded-xl bg-white/5" />
       <div className="h-20 animate-pulse rounded-lg bg-white/5" />
+    </div>
+  );
+}
+
+function PermitInfoCard({ trailId }: { trailId: string }) {
+  const { t, locale } = useLocale();
+  const info = getPermitInfo(trailId);
+  if (!info) return null;
+  const demandKey = `permit.demand.${info.demand}` as StringKey;
+  const demandTone = {
+    low: "text-emerald-300 bg-emerald-500/15 ring-emerald-400/30",
+    moderate: "text-amber-200 bg-amber-500/15 ring-amber-400/30",
+    high: "text-orange-200 bg-orange-500/15 ring-orange-400/30",
+    lottery: "text-red-200 bg-red-500/15 ring-red-400/30",
+  }[info.demand];
+
+  return (
+    <Section title={t("permit.heading")} accent="ember" delay={1.5}>
+      <div className="space-y-2.5">
+        <Row label={t("permit.authority")}>
+          <span className="text-white/85">{info.authority[locale]}</span>
+        </Row>
+        <Row label={t("permit.window")}>
+          <span className="text-white/85 leading-snug">{info.window[locale]}</span>
+        </Row>
+        <Row label={t("permit.demand")}>
+          <span className={clsx("rounded-full px-2 py-0.5 text-[11px] ring-1", demandTone)}>
+            {t(demandKey)}
+          </span>
+        </Row>
+        <a
+          href={info.url}
+          target="_blank"
+          rel="noopener"
+          className="group mt-2 flex items-center justify-center gap-2 rounded-lg bg-ember-500/15 px-4 py-2.5 text-[13px] font-medium text-ember-200 ring-1 ring-ember-400/40 transition hover:bg-ember-500/25 hover:text-white"
+        >
+          <TicketCheck className="h-4 w-4" />
+          {t("permit.applyButton")}
+          <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </a>
+      </div>
+    </Section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 text-[12px]">
+      <span className="w-20 shrink-0 text-[10px] uppercase tracking-wider text-white/45">{label}</span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+function FireWarning({ fires }: { fires: NearbyFire[] }) {
+  const { t } = useLocale();
+  const closest = fires[0];
+  return (
+    <div className="animate-rise overflow-hidden rounded-xl bg-gradient-to-br from-red-500/15 via-red-500/5 to-transparent ring-1 ring-red-400/40">
+      <div className="flex items-start gap-2.5 px-4 pt-3 pb-2">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-500/20 ring-1 ring-red-400/40">
+          <Flame className="h-4 w-4 text-red-300" strokeWidth={2.2} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold text-red-200">{t("fire.title")}</div>
+          <ul className="mt-1.5 space-y-1 text-[12px] text-red-100/85">
+            {fires.map((f) => (
+              <li key={f.fire.id} className="flex items-baseline justify-between gap-2">
+                <span className="truncate">
+                  <span className="font-medium text-red-100">{f.fire.name}</span>
+                  <span className="text-red-100/60"> · {f.distanceKm} km · {f.fire.contained}% contained</span>
+                </span>
+                <span className="shrink-0 font-mono text-[10.5px] text-red-200/65">
+                  {f.fire.acres.toLocaleString()} ac
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 text-[10.5px] text-red-200/55">
+            {t("fire.checkBefore")} · {t("fire.dataSource")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
