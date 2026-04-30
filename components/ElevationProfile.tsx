@@ -5,6 +5,8 @@ import { TrendingUp, MapPin } from "lucide-react";
 import { getElevationProfile, type ElevationProfile as Profile } from "@/lib/elevation";
 import { isLoaded as geometriesLoaded } from "@/lib/geometries";
 import { useLocale } from "@/lib/i18n";
+import { getTrailPOIs } from "@/lib/trail-pois";
+import { POI_HEX } from "@/lib/poi-icons";
 
 export default function ElevationProfile({ trailId }: { trailId: string }) {
   const { t } = useLocale();
@@ -60,11 +62,15 @@ export default function ElevationProfile({ trailId }: { trailId: string }) {
     );
   }
 
-  return <Chart profile={profile} />;
+  return <Chart profile={profile} trailId={trailId} />;
 }
 
-function Chart({ profile }: { profile: Profile }) {
-  const { t, fmtDistance, fmtElevation, fmtElevationShort } = useLocale();
+function Chart({ profile, trailId }: { profile: Profile; trailId: string }) {
+  const { t, locale, fmtDistance, fmtElevation, fmtElevationShort } = useLocale();
+  // Annotate the chart with POIs that have a known mile mark — gives the
+  // elevation profile a sense of "Mile 6 is when you hit the pass" instead
+  // of a faceless wiggle.
+  const poiMarkers = getTrailPOIs(trailId).filter((p) => p.m != null && p.m > 0);
   const W = 400;
   const H = 110;
   const PADX = 12;
@@ -166,6 +172,44 @@ function Chart({ profile }: { profile: Profile }) {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+
+          {/* POI annotations along the curve */}
+          {poiMarkers.map((p, i) => {
+            // Use the POI's own elevation if known, else look up the closest
+            // sample on the curve so the dot lands on the trail line.
+            let feet = p.ft;
+            if (feet == null) {
+              const target = p.m!;
+              let best = profile.samples[0];
+              let bestD = Math.abs(best.miles - target);
+              for (const s of profile.samples) {
+                const d = Math.abs(s.miles - target);
+                if (d < bestD) {
+                  bestD = d;
+                  best = s;
+                }
+              }
+              feet = best.feet;
+            }
+            const cx = xAt(p.m!);
+            const cy = yAt(feet);
+            const name = locale === "zh" && p.nameZh ? p.nameZh : p.name;
+            return (
+              <g key={`poi-${i}`}>
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r="2.8"
+                  fill={POI_HEX[p.type]}
+                  stroke="#fff"
+                  strokeWidth="0.8"
+                  opacity="0.9"
+                >
+                  <title>{name}</title>
+                </circle>
+              </g>
+            );
+          })}
 
           {/* start dot */}
           <circle cx={xAt(start.miles)} cy={yAt(start.feet)} r="3" fill="#7fb6ff" stroke="#fff" strokeWidth="1" />

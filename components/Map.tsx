@@ -13,6 +13,9 @@ import {
 import { fetchActiveFires } from "@/lib/wildfire";
 import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
+import { getTrailPOIs, type POI } from "@/lib/trail-pois";
+import { poisWithPositions } from "@/lib/poi-positions";
+import { POI_HEX } from "@/lib/poi-icons";
 
 interface MapProps {
   trails: Trail[];
@@ -147,6 +150,9 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [geomVersion, setGeomVersion] = useState(0);
+
+  // POI markers attached when a trail is selected (and only that trail's POIs)
+  const poiMarkersRef = useRef<Marker[]>([]);
 
   // Lookup ref so map event handlers always see the latest trails
   const trailsByIdRef = useRef<Record<string, Trail>>({});
@@ -399,6 +405,7 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
       map.remove();
       mapRef.current = null;
       markersRef.current = {};
+      poiMarkersRef.current = [];
     };
   }, []);
 
@@ -491,6 +498,58 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     if (map.isStyleLoaded()) updateFilter();
     else map.once("load", updateFilter);
   }, [selectedId]);
+
+  // POI markers along the selected trail (cleared when no trail or no geometry)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    poiMarkersRef.current.forEach((m) => m.remove());
+    poiMarkersRef.current = [];
+    if (!selectedId) return;
+
+    const pois = getTrailPOIs(selectedId);
+    if (pois.length === 0) return;
+
+    const placed = poisWithPositions(selectedId, pois);
+    for (const { poi, lngLat } of placed) {
+      const el = document.createElement("div");
+      el.className = "poi-dot";
+      el.style.background = POI_HEX[poi.type];
+
+      const name = locale === "zh" && poi.nameZh ? poi.nameZh : poi.name;
+      const distance =
+        poi.m == null
+          ? ""
+          : poi.m === 0
+            ? ""
+            : locale === "zh"
+              ? ` · ${(poi.m * 1.60934).toFixed(1)} 公里`
+              : ` · Mi ${poi.m}`;
+      const elevation =
+        poi.ft == null
+          ? ""
+          : locale === "zh"
+            ? ` · ${Math.round(poi.ft * 0.3048).toLocaleString()} 米`
+            : ` · ${poi.ft.toLocaleString()}′`;
+
+      const popup = new maplibregl.Popup({
+        offset: 10,
+        closeButton: false,
+        closeOnClick: false,
+      }).setHTML(
+        `<div style="font-weight:600;font-size:12px;color:${POI_HEX[poi.type]};">${escapeHTML(name)}</div>
+         <div style="opacity:0.7;margin-top:2px;font-size:11px;">${escapeHTML((distance + elevation).replace(/^ · /, ""))}</div>`,
+      );
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat(lngLat)
+        .setPopup(popup)
+        .addTo(map);
+      el.addEventListener("mouseenter", () => marker.togglePopup());
+      el.addEventListener("mouseleave", () => marker.togglePopup());
+      poiMarkersRef.current.push(marker);
+    }
+  }, [selectedId, geomVersion, locale]);
 
   // fly to selected trail — fit to bounds if we have a line, else point fly-to
   useEffect(() => {

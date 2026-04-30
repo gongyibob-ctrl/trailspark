@@ -30,6 +30,24 @@ export const POI_ICON: Record<POIType, LucideIcon> = {
   wildlife: Bird,
 };
 
+/** Hex color per POI type — used for raw DOM elements (map markers,
+ *  elevation-chart dots) where Tailwind classes don't apply. */
+export const POI_HEX: Record<POIType, string> = {
+  peak: "#a8a29e",
+  viewpoint: "#fbbf24",
+  waterfall: "#38bdf8",
+  lake: "#3b82f6",
+  pass: "#94a3b8",
+  meadow: "#34d399",
+  river: "#22d3ee",
+  tree: "#4ade80",
+  coast: "#2dd4bf",
+  rock: "#a1a1aa",
+  glacier: "#a5f3fc",
+  ruins: "#d97706",
+  wildlife: "#fb923c",
+};
+
 /** Tailwind color hint per type — used for the icon chip background. */
 export const POI_TONE: Record<POIType, string> = {
   peak: "bg-stone-500/15 text-stone-200 ring-stone-400/25",
