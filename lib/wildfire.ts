@@ -19,9 +19,14 @@ export interface WildfireProps {
   discovered: string | null;
 }
 
+import { bboxOfPolygon, bboxWithinKm, haversineKm, type Bbox } from "./geo";
+
 type FireFC = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon, WildfireProps>;
 
-let cache: { data: FireFC; fetchedAt: number } | null = null;
+// Module cache holds the fetched fires + a parallel array of pre-computed
+// bboxes so the per-trail proximity check can do an O(N) bbox sieve before
+// the expensive O(N×V) haversine walk.
+let cache: { data: FireFC; bboxes: Bbox[]; fetchedAt: number } | null = null;
 
 const TTL_MS = 30 * 60 * 1000; // 30 min
 
@@ -87,26 +92,19 @@ export async function fetchActiveFires(): Promise<FireFC> {
   if (cache && Date.now() - cache.fetchedAt < TTL_MS) return cache.data;
   const raw = await fetchRaw();
   const data = normalize(raw);
-  cache = { data, fetchedAt: Date.now() };
+  const bboxes = data.features.map((f) => bboxOfPolygon(f.geometry));
+  cache = { data, bboxes, fetchedAt: Date.now() };
   return data;
 }
 
-// ---------------- Distance ----------------
+// ---------------- Proximity ----------------
 
-function haversineKm(a: [number, number], b: [number, number]): number {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b[1] - a[1]);
-  const dLng = toRad(b[0] - a[0]);
-  const lat1 = toRad(a[1]);
-  const lat2 = toRad(b[1]);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-
-/** Quickest-and-dirty: distance from point to polygon = min over polygon vertices.
- *  Good enough for a "warn user when fire is nearby" check at km scale. */
-function pointToFeatureMinKm(point: [number, number], feature: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon, WildfireProps>): number {
+/** Distance from point to polygon — min over polygon vertices.
+ *  Sloppy on the inside of huge polygons but fine at the "is this within 50 km?" scale. */
+function pointToFeatureMinKm(
+  point: [number, number],
+  feature: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon, WildfireProps>,
+): number {
   let min = Infinity;
   const visit = (ring: number[][]) => {
     for (const [lng, lat] of ring) {
@@ -127,16 +125,21 @@ export interface NearbyFire {
   distanceKm: number;
 }
 
-/** Return fires within `radiusKm` of the point, sorted nearest-first. */
+/** Fires within `radiusKm` of the point, nearest-first. Uses a cheap bbox
+ *  sieve so we only walk vertices for the few fires that could possibly hit. */
 export function nearbyFires(
   fc: FireFC,
   point: [number, number],
   radiusKm = 50,
 ): NearbyFire[] {
   const out: NearbyFire[] = [];
-  for (const f of fc.features) {
-    const d = pointToFeatureMinKm(point, f);
-    if (d <= radiusKm) out.push({ fire: f.properties, distanceKm: Math.round(d) });
+  // bboxes are kept in lockstep with cache.data.features when fetched via
+  // fetchActiveFires(). For callers passing in their own FC we recompute on demand.
+  const bboxes = cache && cache.data === fc ? cache.bboxes : fc.features.map((f) => bboxOfPolygon(f.geometry));
+  for (let i = 0; i < fc.features.length; i++) {
+    if (!bboxWithinKm(bboxes[i], point, radiusKm)) continue;
+    const d = pointToFeatureMinKm(point, fc.features[i]);
+    if (d <= radiusKm) out.push({ fire: fc.features[i].properties, distanceKm: Math.round(d) });
   }
   out.sort((a, b) => a.distanceKm - b.distanceKm);
   return out;

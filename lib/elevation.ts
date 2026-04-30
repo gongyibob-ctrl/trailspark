@@ -3,6 +3,7 @@
 // (cumulative-distance, elevation) pairs for charting. No API key required.
 
 import { getGeometry } from "./geometries";
+import { haversineKm } from "./geo";
 import type { TrailGeometry } from "./types";
 
 export interface ElevationSample {
@@ -28,17 +29,6 @@ export interface ElevationProfile {
 const SAMPLE_COUNT = 64; // tight cap so /v1/elevation stays fast and well under quota
 const M_TO_FT = 3.28084;
 const KM_TO_MI = 0.621371;
-
-function haversineKm(a: [number, number], b: [number, number]): number {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b[1] - a[1]);
-  const dLng = toRad(b[0] - a[0]);
-  const lat1 = toRad(a[1]);
-  const lat2 = toRad(b[1]);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
 
 /** Flatten a (Multi)LineString to a single ordered array of [lng, lat]. */
 function flattenGeom(g: TrailGeometry): [number, number][] {

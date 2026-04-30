@@ -7,7 +7,7 @@ import { isLoaded as geometriesLoaded } from "@/lib/geometries";
 import { useLocale } from "@/lib/i18n";
 
 export default function ElevationProfile({ trailId }: { trailId: string }) {
-  const { t, fmtDistance, fmtElevation, fmtElevationShort, locale } = useLocale();
+  const { t } = useLocale();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -60,24 +60,11 @@ export default function ElevationProfile({ trailId }: { trailId: string }) {
     );
   }
 
-  return <Chart profile={profile} t={t} fmtDistance={fmtDistance} fmtElevation={fmtElevation} fmtElevationShort={fmtElevationShort} locale={locale} />;
+  return <Chart profile={profile} />;
 }
 
-function Chart({
-  profile,
-  t,
-  fmtDistance,
-  fmtElevation,
-  fmtElevationShort,
-  locale,
-}: {
-  profile: Profile;
-  t: (k: any, v?: any) => string;
-  fmtDistance: (mi: number) => string;
-  fmtElevation: (ft: number) => string;
-  fmtElevationShort: (ft: number) => string;
-  locale: "en" | "zh";
-}) {
+function Chart({ profile }: { profile: Profile }) {
+  const { t, fmtDistance, fmtElevation, fmtElevationShort } = useLocale();
   const W = 400;
   const H = 110;
   const PADX = 12;

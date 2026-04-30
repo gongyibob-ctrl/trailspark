@@ -3,12 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import type { Trail } from "@/lib/types";
-import {
-  DIFFICULTY_COLOR,
-  DIFFICULTY_LABEL,
-  ECOSYSTEM_LABEL,
-  TYPE_LABEL,
-} from "@/lib/types";
+import { DIFFICULTY_COLOR } from "@/lib/types";
 import {
   buildLinesFeatureCollection,
   getBounds,
@@ -16,6 +11,8 @@ import {
   loadGeometries,
 } from "@/lib/geometries";
 import { fetchActiveFires } from "@/lib/wildfire";
+import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
+import { TRAILS_ZH } from "@/lib/trails-zh";
 
 interface MapProps {
   trails: Trail[];
@@ -87,16 +84,26 @@ function spreadOverlapping(trails: Trail[]): Record<string, [number, number]> {
   return out;
 }
 
-function buildPopupHTML(trail: Trail, hint?: string): string {
-  const intro = trail.description.length > 170
-    ? trail.description.slice(0, 170).replace(/\s+\S*$/, "") + "…"
-    : trail.description;
+interface PopupCtx {
+  t: (k: StringKey, vars?: Record<string, string | number>) => string;
+  fmtDistance: (mi: number) => string;
+  fmtElevation: (ft: number) => string;
+  pickLocalizedDescription: (trail: Trail) => string;
+  pickLocalizedParkUnit: (trail: Trail) => string;
+}
+
+function buildPopupHTML(trail: Trail, ctx: PopupCtx, hint?: string): string {
+  const description = ctx.pickLocalizedDescription(trail);
+  const intro = description.length > 170
+    ? description.slice(0, 170).replace(/\s+\S*$/, "") + "…"
+    : description;
+  const parkUnit = ctx.pickLocalizedParkUnit(trail);
 
   const tags = [
-    `<span class="ts-pill diff-${trail.difficulty}">${DIFFICULTY_LABEL[trail.difficulty]}</span>`,
-    `<span class="ts-pill">${TYPE_LABEL[trail.type]}</span>`,
-    `<span class="ts-pill">${ECOSYSTEM_LABEL[trail.ecosystem]}</span>`,
-    trail.permitRequired ? `<span class="ts-pill ts-pill-permit">Permit</span>` : "",
+    `<span class="ts-pill diff-${trail.difficulty}">${ctx.t(`difficulty.${trail.difficulty}` as StringKey)}</span>`,
+    `<span class="ts-pill">${ctx.t(`type.${trail.type}` as StringKey)}</span>`,
+    `<span class="ts-pill">${ctx.t(`ecosystem.${trail.ecosystem}` as StringKey)}</span>`,
+    trail.permitRequired ? `<span class="ts-pill ts-pill-permit">${ctx.t("tag.permit")}</span>` : "",
   ]
     .filter(Boolean)
     .join("");
@@ -105,10 +112,10 @@ function buildPopupHTML(trail: Trail, hint?: string): string {
     <div>
       <div class="ts-popup-park">
         <span class="ts-popup-park-dot" style="background:${DIFFICULTY_COLOR[trail.difficulty]}"></span>
-        ${escapeHTML(trail.parkUnit)}
+        ${escapeHTML(parkUnit)}
       </div>
       <div class="ts-popup-name">${escapeHTML(trail.name)}</div>
-      <div class="ts-popup-stats">${trail.lengthMiles} mi · ${trail.elevationGainFt.toLocaleString()} ft gain</div>
+      <div class="ts-popup-stats">${ctx.fmtDistance(trail.lengthMiles)} · ${ctx.t("sidebar.gain", { n: ctx.fmtElevation(trail.elevationGainFt) })}</div>
       <div class="ts-popup-tags">${tags}</div>
       <div class="ts-popup-desc">${escapeHTML(intro)}</div>
       ${hint ? `<div class="ts-popup-hint">${escapeHTML(hint)}</div>` : ""}
@@ -147,6 +154,23 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     () => Object.fromEntries(trails.map((t) => [t.id, t])),
     [trails],
   );
+
+  // Pop-up context (locale-aware) — ref so event handlers see the latest values
+  const { t: tt, locale, fmtDistance: ttFmtDist, fmtElevation: ttFmtElev } = useLocale();
+  const popupCtxRef = useRef({
+    t: tt,
+    fmtDistance: ttFmtDist,
+    fmtElevation: ttFmtElev,
+    pickLocalizedDescription: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.description, tr.description),
+    pickLocalizedParkUnit: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.parkUnit, tr.parkUnit),
+  });
+  popupCtxRef.current = {
+    t: tt,
+    fmtDistance: ttFmtDist,
+    fmtElevation: ttFmtElev,
+    pickLocalizedDescription: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.description, tr.description),
+    pickLocalizedParkUnit: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.parkUnit, tr.parkUnit),
+  };
 
   // Kick off geometry fetch once. Bumping geomVersion forces the lines effect to re-run
   // after the network round-trip resolves.
@@ -353,7 +377,10 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
         map.getCanvas().style.cursor = "pointer";
         // Highlight the hovered line in its difficulty color
         map.setFilter(LINE_LAYER_HOVER, ["==", ["get", "id"], id]);
-        linePopup.setLngLat(e.lngLat).setHTML(buildPopupHTML(trail, "Click to view full details")).addTo(map);
+        linePopup
+          .setLngLat(e.lngLat)
+          .setHTML(buildPopupHTML(trail, popupCtxRef.current, popupCtxRef.current.t("gear.popup.click")))
+          .addTo(map);
       });
       map.on("mouseleave", LINE_LAYER_BASE, () => {
         map.getCanvas().style.cursor = "";
@@ -423,7 +450,7 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
           closeOnClick: false,
           maxWidth: "280px",
           anchor: "bottom",
-        }).setHTML(buildPopupHTML(trail, "Click to view full details"));
+        }).setHTML(buildPopupHTML(trail, popupCtxRef.current, popupCtxRef.current.t("gear.popup.click")));
 
         const pos = positions[trail.id] ?? [trail.trailhead.lng, trail.trailhead.lat];
         const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
@@ -445,7 +472,7 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     if (map.loaded() && map.isStyleLoaded()) addMarkers();
     else map.once("load", addMarkers);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trails, geomVersion]);
+  }, [trails, geomVersion, locale]);
 
   // Selected styling: marker class + line filter
   useEffect(() => {

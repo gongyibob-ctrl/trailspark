@@ -21,7 +21,7 @@ import {
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR } from "@/lib/types";
-import { useLocale, type StringKey } from "@/lib/i18n";
+import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import {
   fetchTrailArchive,
@@ -82,17 +82,17 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   // Check for nearby active wildfires whenever the trail changes
   useEffect(() => {
     if (!trail) return;
-    let cancelled = false;
+    const ac = new AbortController();
     fetchActiveFires()
       .then((fc) => {
-        if (cancelled) return;
+        if (ac.signal.aborted) return;
         const list = nearbyFires(fc, [trail.trailhead.lng, trail.trailhead.lat], 50);
         setFireWarnings(list.slice(0, 3));
       })
-      .catch(() => setFireWarnings([]));
-    return () => {
-      cancelled = true;
-    };
+      .catch(() => {
+        if (!ac.signal.aborted) setFireWarnings([]);
+      });
+    return () => ac.abort();
   }, [trail?.id]);
 
   useEffect(() => {
@@ -142,11 +142,9 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
   const diffColor = DIFFICULTY_COLOR[trail.difficulty];
   const zh = TRAILS_ZH[trail.id];
-  const trailDescription = locale === "zh" && zh?.description ? zh.description : trail.description;
-  const trailHighlights = locale === "zh" && zh?.highlights ? zh.highlights : trail.highlights;
-  const trailParkUnit = locale === "zh" && zh?.parkUnit ? zh.parkUnit : trail.parkUnit;
-  const formatPickedShortLocalized = (d: PickedDate) =>
-    locale === "zh" ? `${d.month} 月 ${d.day} 日` : `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.month-1]} ${d.day}`;
+  const trailDescription = pickLocalized(locale, zh?.description, trail.description);
+  const trailHighlights = pickLocalized(locale, zh?.highlights, trail.highlights);
+  const trailParkUnit = pickLocalized(locale, zh?.parkUnit, trail.parkUnit);
 
   return (
     <aside
@@ -265,7 +263,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
         {/* Weather for the picked date */}
         <Section
-          title={t("section.weatherAround", { date: formatPickedShortLocalized(date) })}
+          title={t("section.weatherAround", { date: formatPickedShort(date, locale) })}
           accent="blue"
           delay={5}
           right={
@@ -816,6 +814,13 @@ interface RidbDetails {
   lastUpdated: string | null;
 }
 
+const DEMAND_TONE: Record<string, string> = {
+  low: "text-emerald-300 bg-emerald-500/15 ring-emerald-400/30",
+  moderate: "text-amber-200 bg-amber-500/15 ring-amber-400/30",
+  high: "text-orange-200 bg-orange-500/15 ring-orange-400/30",
+  lottery: "text-red-200 bg-red-500/15 ring-red-400/30",
+};
+
 function PermitInfoCard({ trailId }: { trailId: string }) {
   const { t, locale } = useLocale();
   const info = getPermitInfo(trailId);
@@ -827,26 +832,21 @@ function PermitInfoCard({ trailId }: { trailId: string }) {
     setDetails(null);
     setShowFull(false);
     if (!info?.ridbId) return;
-    let cancelled = false;
-    fetch(`/api/permit/${info.ridbId}`)
+    const ac = new AbortController();
+    fetch(`/api/permit/${info.ridbId}`, { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d && !d.error) setDetails(d);
+        if (!ac.signal.aborted && d && !d.error) setDetails(d);
       })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+      .catch(() => {
+        // includes AbortError on trail switch — silent
+      });
+    return () => ac.abort();
   }, [info?.ridbId]);
 
   if (!info) return null;
   const demandKey = `permit.demand.${info.demand}` as StringKey;
-  const demandTone = {
-    low: "text-emerald-300 bg-emerald-500/15 ring-emerald-400/30",
-    moderate: "text-amber-200 bg-amber-500/15 ring-amber-400/30",
-    high: "text-orange-200 bg-orange-500/15 ring-orange-400/30",
-    lottery: "text-red-200 bg-red-500/15 ring-red-400/30",
-  }[info.demand];
+  const demandTone = DEMAND_TONE[info.demand];
 
   // Truncate official notes for collapsed state. RIDB notes only available in English.
   const officialNotes = locale === "en" ? details?.importantInfo : null;

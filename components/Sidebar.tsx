@@ -5,7 +5,7 @@ import { Search, Mountain, Filter, X, Heart, PanelLeftClose, PanelLeft } from "l
 import { useFavorites } from "@/lib/favorites";
 import type { Difficulty, Region, Trail, TrailType } from "@/lib/types";
 import { DIFFICULTY_COLOR } from "@/lib/types";
-import { useLocale, type StringKey } from "@/lib/i18n";
+import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import clsx from "clsx";
 
@@ -320,8 +320,7 @@ function TrailCard({
   index: number;
 }) {
   const { locale, t, fmtDistance, fmtElevation } = useLocale();
-  const zh = TRAILS_ZH[trail.id];
-  const parkUnitLabel = locale === "zh" && zh?.parkUnit ? zh.parkUnit : trail.parkUnit;
+  const parkUnitLabel = pickLocalized(locale, TRAILS_ZH[trail.id]?.parkUnit, trail.parkUnit);
   return (
     <li
       className="animate-rise"

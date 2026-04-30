@@ -58,24 +58,9 @@ export interface TrailGeometryEntry {
   fetchedAt: string;
 }
 
-export const REGION_LABEL: Record<Region, string> = {
-  "yosemite-sierra": "Yosemite & High Sierra",
-  rainier: "Mt Rainier",
-  olympic: "Olympic NP",
-  "north-cascades": "North Cascades",
-  oregon: "Oregon Cascades & Gorge",
-  norcal: "Northern California",
-  "socal-desert": "Southern CA & Desert",
-  "bigsur-bay": "Big Sur & Bay Area",
-  "thru-hike": "Iconic Thru-Hikes",
-};
-
-export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
-  easy: "Easy",
-  moderate: "Moderate",
-  hard: "Hard",
-  extreme: "Extreme",
-};
+// Display labels for these enums live in lib/i18n.tsx (`difficulty.*`,
+// `type.*`, `region.*`, `ecosystem.*`). Only the difficulty *color* is here
+// because it's CSS-side and locale-independent.
 
 export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
   easy: "#22c55e",
@@ -84,20 +69,3 @@ export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
   extreme: "#dc2626",
 };
 
-export const TYPE_LABEL: Record<TrailType, string> = {
-  day: "Day Hike",
-  "multi-day": "Multi-day Backpack",
-  "thru-hike": "Thru-Hike",
-};
-
-export const ECOSYSTEM_LABEL: Record<Ecosystem, string> = {
-  alpine: "Alpine",
-  subalpine: "Subalpine",
-  volcanic: "Volcanic",
-  rainforest: "Temperate Rainforest",
-  coastal: "Coastal",
-  desert: "Desert",
-  redwood: "Redwood Forest",
-  chaparral: "Chaparral",
-  gorge: "River Gorge",
-};

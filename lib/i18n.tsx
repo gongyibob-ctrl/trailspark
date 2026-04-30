@@ -355,3 +355,21 @@ export function monthFull(m: number, locale: Locale): string {
 export function weekdayShort(date: Date, locale: Locale): string {
   return date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { weekday: "short" });
 }
+
+/** Render a {month, day} as "Apr 30" / "4 月 30 日" — used in section titles
+ *  and the date-picker headline. */
+export function formatPickedShort(d: { month: number; day: number }, locale: Locale): string {
+  if (locale === "zh") return `${d.month} 月 ${d.day} 日`;
+  return `${monthShort(d.month, locale)} ${d.day}`;
+}
+
+/** Choose a locale-appropriate value with a fallback. The pattern
+ *  `locale === "zh" && zhValue ? zhValue : enValue` was duplicated across
+ *  TrailCard and TrailDetail — this collapses it. */
+export function pickLocalized<T>(
+  locale: Locale,
+  zhValue: T | null | undefined,
+  enValue: T,
+): T {
+  return locale === "zh" && zhValue != null ? zhValue : enValue;
+}
