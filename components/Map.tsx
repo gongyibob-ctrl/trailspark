@@ -33,7 +33,6 @@ const LINE_LAYER_GLOW = "trail-line-glow";
 const LINE_LAYER_BASE = "trail-line-base";
 const LINE_LAYER_HOVER = "trail-line-hover";
 const LINE_LAYER_SELECTED = "trail-line-selected";
-const TERRAIN_SOURCE_ID = "terrain-dem";
 const FIRE_SOURCE_ID = "wildfire";
 const FIRE_LAYER_FILL = "wildfire-fill";
 const FIRE_LAYER_LINE = "wildfire-line";
@@ -252,23 +251,13 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     map.on("load", () => {
       console.log("[Map] style loaded");
 
-      // 3D terrain — uses Mapzen Terrarium DEM tiles (free, no key)
-      if (!map.getSource(TERRAIN_SOURCE_ID)) {
-        try {
-          map.addSource(TERRAIN_SOURCE_ID, {
-            type: "raster-dem",
-            tiles: [
-              "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
-            ],
-            tileSize: 256,
-            maxzoom: 12,
-            encoding: "terrarium",
-          });
-          map.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.4 });
-        } catch (e) {
-          console.warn("[Map] terrain init failed:", e);
-        }
-      }
+      // NOTE: 3D terrain (raster-dem + setTerrain) was removed because it
+      // intermittently triggered an internal MapLibre crash:
+      //   "Attempting to run(), but is already running"
+      // The crash fires from a ResizeObserver-driven redraw during HMR /
+      // React strict-mode double-mount and breaks the entire React tree.
+      // Pitch on fly-to still works without it; we lose only the bumpy
+      // terrain shading, which was always subtle on this base style.
 
       // Empty source up-front; data set via the linesGeoJSON effect
       if (!map.getSource(LINE_SOURCE_ID)) {
