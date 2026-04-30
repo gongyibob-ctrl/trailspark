@@ -175,6 +175,9 @@ export const STRINGS = {
 
   "sidebar.popularity":         { en: "Popularity",  zh: "人流量" },
 
+  // Seasonal advisories
+  "advisory.heading":            { en: "Heads-up for {month}", zh: "{month} 提示" },
+
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
   "difficulty.moderate":        { en: "Moderate",  zh: "中等" },

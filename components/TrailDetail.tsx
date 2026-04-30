@@ -25,6 +25,7 @@ import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
 import { POI_ICON, POI_TONE } from "@/lib/poi-icons";
+import { getAdvisoriesForDate, type SeasonalAdvisory } from "@/lib/seasonal";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import {
   fetchTrailArchive,
@@ -295,6 +296,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           }
         >
           <DatePicker value={date} onChange={handleDateChange} bestMonths={bestMonthsSet} />
+          <SeasonalAdvisories trailId={trail.id} month={date.month} />
         </Section>
 
         {/* Weather for the picked date */}
@@ -937,6 +939,35 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <div className="flex items-start gap-3 text-[12px]">
       <span className="w-20 shrink-0 text-[10px] uppercase tracking-wider text-white/45">{label}</span>
       <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+function SeasonalAdvisories({ trailId, month }: { trailId: string; month: number }) {
+  const { locale } = useLocale();
+  const advisories = getAdvisoriesForDate(trailId, month);
+  if (advisories.length === 0) return null;
+  return (
+    <div className="mt-3 space-y-1.5">
+      {advisories.map((a, i) => {
+        const tone =
+          a.tone === "warning"
+            ? "bg-amber-500/10 ring-amber-400/30 text-amber-100"
+            : "bg-forest-500/10 ring-forest-400/30 text-forest-100";
+        const icon = a.tone === "warning" ? "⚠" : "ℹ";
+        return (
+          <div
+            key={i}
+            className={clsx(
+              "flex items-start gap-2 rounded-md px-2.5 py-2 text-[12px] ring-1",
+              tone,
+            )}
+          >
+            <span className="mt-px text-[14px] leading-none">{icon}</span>
+            <span className="leading-relaxed">{a.message[locale]}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
