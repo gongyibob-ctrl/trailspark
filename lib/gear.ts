@@ -33,18 +33,40 @@ export const CATEGORY_LABEL: Record<GearCategory, string> = {
   extras: "Extras",
 };
 
+// Always critical regardless of trail: dehydration / starvation / blood-loss
+// don't care that your trail is short and urban-adjacent. Headlamp / lighter /
+// insulating-layer / emergency-shelter are upgraded to critical only on
+// remote / alpine / long trails — see needsRemoteEssentials() below.
 const TEN_ESSENTIALS: GearItem[] = [
   { name: "Topographic map", category: "navigation", essential: true, critical: true },
   { name: "Compass or GPS", category: "navigation", essential: true, critical: true },
   { name: "Sun hat & sunglasses", category: "clothing", essential: true },
   { name: "SPF 30+ sunscreen", category: "safety", essential: true },
-  { name: "Insulating layer (fleece or puffy)", category: "clothing", essential: true, critical: true },
-  { name: "Headlamp + spare batteries", category: "electronics", essential: true, critical: true },
+  { name: "Insulating layer (fleece or puffy)", category: "clothing", essential: true },
+  { name: "Headlamp + spare batteries", category: "electronics", essential: true },
   { name: "First aid kit", category: "safety", essential: true, critical: true },
-  { name: "Lighter or matches (waterproof)", category: "safety", essential: true, critical: true },
+  { name: "Lighter or matches (waterproof)", category: "safety", essential: true },
   { name: "Multi-tool / knife", category: "extras", essential: true },
-  { name: "Emergency shelter (bivvy or space blanket)", category: "safety", essential: true, critical: true },
+  { name: "Emergency shelter (bivvy or space blanket)", category: "safety", essential: true },
 ];
+
+// Items that should be critical on real backcountry but stay merely essential
+// on a short urban-adjacent day hike (Mt Tam, Mt Diablo, Multnomah-Wahkeena).
+const REMOTE_ONLY_CRITICAL = new Set([
+  "Headlamp + spare batteries",
+  "Lighter or matches (waterproof)",
+  "Insulating layer (fleece or puffy)",
+  "Emergency shelter (bivvy or space blanket)",
+]);
+
+function needsRemoteEssentials(trail: Trail): boolean {
+  if (trail.type !== "day") return true; // any overnight stay
+  if (trail.lengthMiles > 10) return true;
+  if (trail.elevationGainFt > 5000) return true;
+  if (trail.ecosystem === "alpine" || trail.ecosystem === "subalpine" || trail.ecosystem === "volcanic") return true;
+  if (trail.difficulty === "extreme") return true;
+  return false;
+}
 
 interface GearContext {
   trail: Trail;
@@ -211,7 +233,15 @@ export function recommendGear(trail: Trail, season: Season): GearItem[] {
   // Dedupe by name (later additions take precedence)
   const dedup = new Map<string, GearItem>();
   for (const it of items) dedup.set(it.name, it);
-  return Array.from(dedup.values());
+  const all = Array.from(dedup.values());
+
+  // Upgrade context-dependent items to critical on remote / alpine / long trails
+  if (needsRemoteEssentials(trail)) {
+    return all.map((it) =>
+      REMOTE_ONLY_CRITICAL.has(it.name) ? { ...it, critical: true } : it,
+    );
+  }
+  return all;
 }
 
 export function groupByCategory(items: GearItem[]): Record<GearCategory, GearItem[]> {
