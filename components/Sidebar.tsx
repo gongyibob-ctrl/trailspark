@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Search,
   Mountain,
@@ -124,9 +125,12 @@ export default function Sidebar({
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-base font-semibold tracking-tight text-white">Trailspark</div>
-            <div className="text-[11px] uppercase tracking-[0.14em] text-forest-200/70">
+            <Link
+              href="/trails"
+              className="block text-[11px] uppercase tracking-[0.14em] text-forest-200/70 transition-colors hover:text-forest-200"
+            >
               {t("brand.tagline")} · {t("brand.trailsCount", { n: trails.length })}
-            </div>
+            </Link>
           </div>
           <LocaleToggle locale={locale} onChange={setLocale} />
           <UploadFileButton />

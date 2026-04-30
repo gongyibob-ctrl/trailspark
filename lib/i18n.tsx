@@ -40,6 +40,7 @@ export const STRINGS = {
   "detail.aria.shareCopied":    { en: "Copied!", zh: "已复制" },
   "detail.aria.favoriteSave":   { en: "Save to favorites", zh: "收藏" },
   "detail.aria.favoriteRemove": { en: "Remove from favorites", zh: "取消收藏" },
+  "detail.permalinkLink":       { en: "View dedicated page for this trail →", zh: "查看该路线的独立页面 →" },
 
   // Stats
   "stats.length":               { en: "Length", zh: "长度" },

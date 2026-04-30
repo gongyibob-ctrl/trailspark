@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   X,
   ExternalLink,
@@ -360,6 +361,13 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
             <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         )}
+
+        <Link
+          href={`/trails/${trail.id}`}
+          className="block text-center text-[11px] text-white/40 hover:text-white/70"
+        >
+          {t("detail.permalinkLink")}
+        </Link>
 
       </div>
     </aside>
