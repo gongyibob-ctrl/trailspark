@@ -3,6 +3,12 @@
 
 const R_EARTH_KM = 6371;
 
+/** "37.7327, -119.5575" — 4-decimal precision picked to be precise enough
+ *  to distinguish trailheads (~10 m) without overstating GPS accuracy. */
+export function formatLatLng(lat: number, lng: number): string {
+  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+}
+
 export function haversineKm(a: [number, number], b: [number, number]): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b[1] - a[1]);

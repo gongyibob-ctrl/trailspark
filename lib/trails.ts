@@ -1646,12 +1646,22 @@ const RAW_TRAILS: Omit<Trail, "popularity" | "scenery">[] = [
   },
 ];
 
-export const TRAILS: Trail[] = RAW_TRAILS.map((t) => ({
-  ...t,
-  popularity: POPULARITY_BY_ID[t.id] ?? "steady",
-  scenery: SCENERY_BY_ID[t.id] ?? 3,
-  // Inline `endpoint` on the entry (if any) wins; otherwise use the side-map
-  endpoint: t.endpoint ?? ENDPOINT_BY_ID[t.id],
-}));
+export const TRAILS: Trail[] = RAW_TRAILS.map((t) => {
+  const popularity = POPULARITY_BY_ID[t.id];
+  const scenery = SCENERY_BY_ID[t.id];
+  if (popularity == null) {
+    throw new Error(`[trails] Missing POPULARITY_BY_ID entry for "${t.id}"`);
+  }
+  if (scenery == null) {
+    throw new Error(`[trails] Missing SCENERY_BY_ID entry for "${t.id}"`);
+  }
+  return {
+    ...t,
+    popularity,
+    scenery,
+    // Inline `endpoint` on the entry (if any) wins; otherwise use the side-map
+    endpoint: t.endpoint ?? ENDPOINT_BY_ID[t.id],
+  };
+});
 
 export const TRAIL_BY_ID = Object.fromEntries(TRAILS.map((t) => [t.id, t])) as Record<string, Trail>;

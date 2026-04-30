@@ -59,6 +59,8 @@ interface StatProps {
   value: string;
 }
 
+const STAR_INDEXES = [1, 2, 3, 4, 5] as const;
+
 /** Scenery rating, rendered as 5 stars with the first n filled. */
 export function SceneryStars({
   n,
@@ -71,8 +73,8 @@ export function SceneryStars({
 }) {
   const px = size === "md" ? "h-3 w-3" : "h-2.5 w-2.5";
   return (
-    <span className="inline-flex items-center gap-0.5" title={title} aria-label={title}>
-      {[1, 2, 3, 4, 5].map((i) => (
+    <span className="inline-flex items-center gap-0.5" role="img" aria-label={title} title={title}>
+      {STAR_INDEXES.map((i) => (
         <Star
           key={i}
           className={clsx(px, i <= n ? "fill-amber-300 text-amber-300" : "text-white/25")}

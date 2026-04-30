@@ -22,6 +22,7 @@ import {
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
+import { formatLatLng } from "@/lib/geo";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
 import { Section, SceneryStars, Stat } from "./Section";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
@@ -360,17 +361,12 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           </a>
         )}
 
-        <div className="flex items-center gap-2 text-[11px] text-white/40">
-          <MapPin className="h-3 w-3" />
-          {t("gear.trailhead", { coords: `${trail.trailhead.lat.toFixed(4)}, ${trail.trailhead.lng.toFixed(4)}` })}
-        </div>
       </div>
     </aside>
   );
 }
 
 function stagger(i: number): React.CSSProperties {
-  // applies the same delay to all immediate children using the [&>*] arbitrary selector
   return { ["--stagger" as any]: `${0.1 + i * 0.06}s`, animationDelay: `${0.08 + i * 0.06}s` };
 }
 
@@ -1245,11 +1241,9 @@ function AccessRow({
         {label}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-white/85">{name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</div>
+        <div className="truncate text-white/85">{name ?? formatLatLng(lat, lng)}</div>
         {name && (
-          <div className="font-mono text-[10px] text-white/40">
-            {lat.toFixed(4)}, {lng.toFixed(4)}
-          </div>
+          <div className="font-mono text-[10px] text-white/40">{formatLatLng(lat, lng)}</div>
         )}
       </div>
       <a

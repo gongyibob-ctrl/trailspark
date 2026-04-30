@@ -161,11 +161,27 @@ const GEAR_GRAMS: Record<string, number> = {
   "Hand warmers": 30,
 };
 
+// Calibrated against the curated West Coast set. "Remote" = strict tier
+// (life-critical upgrade); "insulation" = looser (cold exposure on summer
+// day hikes is the edge case the looser thresholds catch).
+const REMOTE_LONG_MILES = 10;
+const REMOTE_BIG_GAIN_FT = 5000;
+const INSULATION_LONG_MILES = 8;
+const INSULATION_BIG_GAIN_FT = 3000;
+
+function isHighElevationEcosystem(trail: Trail): boolean {
+  return (
+    trail.ecosystem === "alpine" ||
+    trail.ecosystem === "subalpine" ||
+    trail.ecosystem === "volcanic"
+  );
+}
+
 function needsRemoteEssentials(trail: Trail): boolean {
   if (trail.type !== "day") return true; // any overnight stay
-  if (trail.lengthMiles > 10) return true;
-  if (trail.elevationGainFt > 5000) return true;
-  if (trail.ecosystem === "alpine" || trail.ecosystem === "subalpine" || trail.ecosystem === "volcanic") return true;
+  if (trail.lengthMiles > REMOTE_LONG_MILES) return true;
+  if (trail.elevationGainFt > REMOTE_BIG_GAIN_FT) return true;
+  if (isHighElevationEcosystem(trail)) return true;
   if (trail.difficulty === "extreme") return true;
   return false;
 }
@@ -177,15 +193,9 @@ function needsRemoteEssentials(trail: Trail): boolean {
 function needsInsulation(trail: Trail, season: Season): boolean {
   if (trail.type !== "day") return true;
   if (season !== "summer") return true;
-  if (
-    trail.ecosystem === "alpine" ||
-    trail.ecosystem === "subalpine" ||
-    trail.ecosystem === "volcanic"
-  ) {
-    return true;
-  }
-  if (trail.lengthMiles > 8) return true;
-  if (trail.elevationGainFt > 3000) return true;
+  if (isHighElevationEcosystem(trail)) return true;
+  if (trail.lengthMiles > INSULATION_LONG_MILES) return true;
+  if (trail.elevationGainFt > INSULATION_BIG_GAIN_FT) return true;
   return false;
 }
 

@@ -97,7 +97,6 @@ export const STRINGS = {
   "gear.copyListTooltip":        { en: "Copy just the gear (with checkboxes for Notes)",
                                     zh: "只复制装备清单（带 Notes 可用的勾选框）" },
   "gear.officialLink":          { en: "Official trail info", zh: "官方信息" },
-  "gear.trailhead":             { en: "Trailhead: {coords}", zh: "起点坐标：{coords}" },
   "gear.popup.click":           { en: "Click to view full details", zh: "点击查看完整详情" },
 
   // Map / popup
