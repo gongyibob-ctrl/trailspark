@@ -1,0 +1,328 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 18 30 24;
+  --foreground: 240 250 244;
+}
+
+html,
+body,
+#__next {
+  height: 100%;
+}
+
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* MapLibre overrides */
+.maplibregl-canvas {
+  outline: none !important;
+}
+.maplibregl-ctrl-attrib {
+  background-color: rgba(20, 30, 25, 0.6) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 10px !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.maplibregl-ctrl-group {
+  background: rgba(20, 30, 25, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px);
+}
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.4);
+}
+.maplibregl-popup-content {
+  background: linear-gradient(160deg, rgba(20, 35, 28, 0.96) 0%, rgba(12, 22, 17, 0.96) 100%) !important;
+  color: white !important;
+  padding: 11px 13px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px) saturate(140%);
+  font-size: 12px;
+  max-width: 280px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+}
+.maplibregl-popup-tip {
+  border-top-color: rgba(15, 25, 20, 0.96) !important;
+  border-bottom-color: rgba(15, 25, 20, 0.96) !important;
+}
+
+/* Trail popup content */
+.ts-popup-park {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ts-popup-park-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.ts-popup-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 3px;
+  line-height: 1.25;
+  color: white;
+}
+.ts-popup-stats {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+}
+.ts-popup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 7px;
+}
+.ts-pill {
+  font-size: 10px;
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.ts-pill-permit {
+  background: rgba(238, 126, 62, 0.16);
+  border-color: rgba(238, 126, 62, 0.32);
+  color: #ffb27a;
+}
+.ts-popup-desc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 7px;
+}
+.ts-popup-hint {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Custom marker pin */
+.trail-pin {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
+/* Pin size shrunk when the trail also has a line drawn */
+.trail-pin.trail-pin-small {
+  width: 18px;
+  height: 18px;
+}
+.trail-pin.trail-pin-small .trail-pin-inner {
+  border-width: 1.5px;
+  font-size: 9px;
+}
+.trail-pin:hover {
+  transform: scale(1.3);
+  z-index: 10;
+}
+.trail-pin.selected {
+  transform: scale(1.55);
+  z-index: 20;
+}
+.trail-pin.selected::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.6;
+  animation: pingSoft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+.trail-pin-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 11px;
+  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.25), 0 0 0 0 transparent;
+  transition: box-shadow 0.25s ease;
+}
+.trail-pin:hover .trail-pin-inner {
+  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.25), 0 0 22px 4px rgba(255, 255, 255, 0.35);
+}
+.trail-pin-inner > span,
+.trail-pin-inner > svg {
+  transform: rotate(45deg);
+}
+.trail-pin-inner > svg {
+  width: 12px;
+  height: 12px;
+  stroke: white;
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trail-pin.trail-pin-small .trail-pin-inner > svg {
+  width: 9px;
+  height: 9px;
+  stroke-width: 2.6;
+}
+@keyframes pingSoft {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.75;
+  }
+  75%, 100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Glassy panel utility */
+.glass {
+  background: linear-gradient(160deg, rgba(20, 35, 28, 0.85) 0%, rgba(15, 25, 20, 0.92) 100%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.glass-light {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Animated trail-card hover */
+.trail-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.22s ease;
+}
+.trail-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.trail-card:hover::before {
+  opacity: 1;
+  animation: shimmer 1.6s ease;
+}
+.trail-card:hover {
+  transform: translateX(2px);
+}
+
+/* Range slider */
+.day-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+.day-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a0bda8 0%, #547d62 100%);
+  border: 2px solid #1a2a22;
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(115, 154, 126, 0);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.day-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(115, 154, 126, 0.25);
+}
+.day-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a0bda8 0%, #547d62 100%);
+  border: 2px solid #1a2a22;
+  cursor: grab;
+}
+
+/* Difficulty pills */
+.diff-easy {
+  background: rgba(34, 197, 94, 0.18);
+  color: #6fe39d;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.diff-moderate {
+  background: rgba(59, 130, 246, 0.18);
+  color: #7fb6ff;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.diff-hard {
+  background: rgba(249, 115, 22, 0.18);
+  color: #ffb27a;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+.diff-extreme {
+  background: rgba(220, 38, 38, 0.18);
+  color: #ff8a8a;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
