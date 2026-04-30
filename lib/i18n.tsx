@@ -368,6 +368,14 @@ export function fmtWeight(grams: number, locale: Locale): string {
   return `${lb.toFixed(1)} lb`;
 }
 
+/** Locale-aware mile/km label for POIs and similar distances along a route.
+ *  Returns "Mi 22" / "35.4 公里" — distinct from `fmtDistance` which always
+ *  carries the full unit. */
+export function fmtPoiMiles(miles: number, locale: Locale): string {
+  if (locale === "zh") return `${(miles * MI_TO_KM).toFixed(1)} 公里`;
+  return `Mi ${miles}`;
+}
+
 /** Compact per-item weight string used inline (e.g., "350g"). */
 export function fmtWeightShort(grams: number, locale: Locale): string {
   if (locale === "zh") {
@@ -429,6 +437,7 @@ export function useLocale() {
     fmtWind: (mph: number) => fmtWind(mph, locale),
     fmtWeight: (g: number) => fmtWeight(g, locale),
     fmtWeightShort: (g: number) => fmtWeightShort(g, locale),
+    fmtPoiMiles: (mi: number) => fmtPoiMiles(mi, locale),
   };
 }
 

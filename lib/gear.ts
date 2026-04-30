@@ -351,6 +351,14 @@ export function totalGrams(items: GearItem[]): number {
   return items.reduce((sum, it) => sum + (it.g ?? 0), 0);
 }
 
+export type GearTier = "critical" | "essential" | "optional";
+
+export function getGearTier(item: GearItem): GearTier {
+  if (item.critical) return "critical";
+  if (item.essential) return "essential";
+  return "optional";
+}
+
 export function groupByCategory(items: GearItem[]): Record<GearCategory, GearItem[]> {
   const out: Record<GearCategory, GearItem[]> = {
     footwear: [],

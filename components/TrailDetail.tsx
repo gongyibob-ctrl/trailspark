@@ -23,8 +23,9 @@ import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
+import { Section, Stat } from "./Section";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
-import { POI_ICON, POI_TONE } from "@/lib/poi-icons";
+import { POI_ICON, POI_TONE, pickPoiName } from "@/lib/poi-icons";
 import { getAdvisoriesForDate, type SeasonalAdvisory } from "@/lib/seasonal";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import {
@@ -39,7 +40,7 @@ import {
   weatherLabel,
 } from "@/lib/weather";
 import { fetchActiveFires, nearbyFires, type NearbyFire } from "@/lib/wildfire";
-import { getPermitInfo } from "@/lib/permits";
+import { getPermitInfo, type PermitDemand } from "@/lib/permits";
 import { formatTrailForCopy } from "@/lib/copy";
 import {
   bestMonths as computeBestMonths,
@@ -49,7 +50,7 @@ import {
 } from "@/lib/dates";
 import DatePicker from "./DatePicker";
 import ElevationProfile from "./ElevationProfile";
-import { recommendGear, groupByCategory, totalGrams, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
+import { recommendGear, groupByCategory, totalGrams, getGearTier, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
 import { CATEGORY_ICON, iconForGear } from "@/lib/gear-icons";
 import { localizeGear } from "@/lib/gear-zh";
 import { usePackedGear } from "@/lib/packed";
@@ -361,48 +362,6 @@ function stagger(i: number): React.CSSProperties {
   return { ["--stagger" as any]: `${0.1 + i * 0.06}s`, animationDelay: `${0.08 + i * 0.06}s` };
 }
 
-type SectionAccent = "neutral" | "forest" | "ember" | "blue";
-
-const ACCENT_BAR: Record<SectionAccent, string> = {
-  neutral: "bg-white/40",
-  forest: "bg-forest-300",
-  ember: "bg-ember-400",
-  blue: "bg-blue-400",
-};
-
-function Section({
-  title,
-  accent = "neutral",
-  right,
-  children,
-  delay = 0,
-  flush = false,
-}: {
-  title: string;
-  accent?: SectionAccent;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-  delay?: number;
-  /** When true, content has its own padding (chart fills card) — section adds none. */
-  flush?: boolean;
-}) {
-  return (
-    <section
-      className="animate-rise rounded-xl bg-white/[0.03] ring-1 ring-white/10"
-      style={{ animationDelay: `${0.08 + delay * 0.07}s` }}
-    >
-      <header className="flex items-center justify-between gap-2 px-4 pt-3.5 pb-2">
-        <h3 className="flex items-center gap-2 text-[13.5px] font-semibold tracking-tight text-white">
-          <span className={`h-3.5 w-[3px] rounded-full ${ACCENT_BAR[accent]}`} />
-          {title}
-        </h3>
-        {right && <div className="shrink-0">{right}</div>}
-      </header>
-      <div className={flush ? "" : "px-4 pb-4"}>{children}</div>
-    </section>
-  );
-}
-
 function Badge({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <span
@@ -413,18 +372,6 @@ function Badge({ className, children }: { className?: string; children: React.Re
     >
       {children}
     </span>
-  );
-}
-
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-black/30 px-3.5 py-2.5 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/55">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-[16px] font-semibold tabular-nums text-white">{value}</div>
-    </div>
   );
 }
 
@@ -792,7 +739,7 @@ interface RidbDetails {
   lastUpdated: string | null;
 }
 
-const DEMAND_TONE: Record<string, string> = {
+const DEMAND_TONE: Record<PermitDemand, string> = {
   low: "text-emerald-300 bg-emerald-500/15 ring-emerald-400/30",
   moderate: "text-amber-200 bg-amber-500/15 ring-amber-400/30",
   high: "text-orange-200 bg-orange-500/15 ring-orange-400/30",
@@ -800,13 +747,13 @@ const DEMAND_TONE: Record<string, string> = {
 };
 
 function AlongTheWay({ pois }: { pois: POI[] }) {
-  const { locale, t, fmtDistance, fmtElevation } = useLocale();
+  const { locale, t, fmtElevation } = useLocale();
   return (
     <ul className="space-y-1.5">
       {pois.map((p, i) => {
         const Icon = POI_ICON[p.type];
         const tone = POI_TONE[p.type];
-        const name = locale === "zh" && p.nameZh ? p.nameZh : p.name;
+        const name = pickPoiName(p, locale);
         const distance = p.m == null
           ? null
           : p.m === 0
@@ -1161,7 +1108,7 @@ function GearRow({
   const { t, locale, fmtWeightShort } = useLocale();
   const ItemIcon = iconForGear(item.name, category);
   const localized = localizeGear(item, locale);
-  const tier = item.critical ? "critical" : item.essential ? "essential" : "optional";
+  const tier = getGearTier(item);
 
   return (
     <li>

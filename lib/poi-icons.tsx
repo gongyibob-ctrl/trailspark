@@ -14,6 +14,15 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { POIType } from "./trail-pois";
 
+/** Locale-aware POI name fallback — keeps the EN name when the user is in
+ *  English mode or no Chinese override exists. */
+export function pickPoiName(
+  poi: { name: string; nameZh?: string },
+  locale: "en" | "zh",
+): string {
+  return locale === "zh" && poi.nameZh ? poi.nameZh : poi.name;
+}
+
 export const POI_ICON: Record<POIType, LucideIcon> = {
   peak: Mountain,
   viewpoint: Eye,

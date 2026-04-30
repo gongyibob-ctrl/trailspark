@@ -11,11 +11,11 @@ import {
   loadGeometries,
 } from "@/lib/geometries";
 import { fetchActiveFires } from "@/lib/wildfire";
-import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
+import { useLocale, pickLocalized, fmtElevation, fmtPoiMiles, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
 import { poisWithPositions } from "@/lib/poi-positions";
-import { POI_HEX } from "@/lib/poi-icons";
+import { POI_HEX, pickPoiName } from "@/lib/poi-icons";
 
 interface MapProps {
   trails: Trail[];
@@ -586,21 +586,9 @@ export default function Map({ trails, userTrails, selectedId, onSelect, flyToId 
       el.className = "poi-dot";
       el.style.background = POI_HEX[poi.type];
 
-      const name = locale === "zh" && poi.nameZh ? poi.nameZh : poi.name;
-      const distance =
-        poi.m == null
-          ? ""
-          : poi.m === 0
-            ? ""
-            : locale === "zh"
-              ? ` · ${(poi.m * 1.60934).toFixed(1)} 公里`
-              : ` · Mi ${poi.m}`;
-      const elevation =
-        poi.ft == null
-          ? ""
-          : locale === "zh"
-            ? ` · ${Math.round(poi.ft * 0.3048).toLocaleString()} 米`
-            : ` · ${poi.ft.toLocaleString()}′`;
+      const name = pickPoiName(poi, locale);
+      const distance = poi.m && poi.m > 0 ? ` · ${fmtPoiMiles(poi.m, locale)}` : "";
+      const elevation = poi.ft != null ? ` · ${fmtElevation(poi.ft, locale)}` : "";
 
       const popup = new maplibregl.Popup({
         offset: 10,

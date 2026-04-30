@@ -12,10 +12,12 @@ import {
   fmtElevation,
   fmtTemp,
   fmtPrecip,
+  fmtPoiMiles,
   pickLocalized,
   t as i18nT,
   type StringKey,
 } from "./i18n";
+import { pickPoiName } from "./poi-icons";
 import { TRAILS_ZH } from "./trails-zh";
 import { getTrailPOIs } from "./trail-pois";
 import { getPermitInfo } from "./permits";
@@ -90,14 +92,11 @@ export function formatTrailForCopy(ctx: CopyContext): string {
   if (pois.length > 0) {
     out.push(`🌲 ${t("offline.poisSection")}`);
     for (const p of pois) {
-      const name = locale === "zh" && p.nameZh ? p.nameZh : p.name;
       const parts: string[] = [];
       if (p.m != null) {
-        if (p.m === 0) parts.push(t("poi.atTrailhead"));
-        else if (locale === "zh") parts.push(`${(p.m * 1.60934).toFixed(1)} 公里`);
-        else parts.push(`Mi ${p.m}`);
+        parts.push(p.m === 0 ? t("poi.atTrailhead") : fmtPoiMiles(p.m, locale));
       }
-      parts.push(name);
+      parts.push(pickPoiName(p, locale));
       if (p.ft != null) parts.push(`(${fmtElevation(p.ft, locale)})`);
       out.push(`   • ${parts.join("  ")}`);
     }
