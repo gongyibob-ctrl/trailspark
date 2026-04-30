@@ -155,6 +155,26 @@ export const STRINGS = {
   "offline.fireSection":        { en: "Active wildfires nearby", zh: "附近活跃野火" },
   "offline.source":             { en: "Source: Trailspark · {url}", zh: "来源：Trailspark · {url}" },
 
+  // Popularity tier
+  "popularity.iconic":          { en: "Iconic",      zh: "经典" },
+  "popularity.popular":         { en: "Popular",     zh: "热门" },
+  "popularity.steady":          { en: "Steady",      zh: "常规" },
+  "popularity.backcountry":     { en: "Backcountry", zh: "荒野" },
+  "popularity.iconic.desc":     { en: "Famous trail — expect company at viewpoints",
+                                   zh: "知名路线 · 观景点常有人" },
+  "popularity.popular.desc":    { en: "Reliable foot traffic — you won't be alone",
+                                   zh: "稳定人流 · 不会独行" },
+  "popularity.steady.desc":     { en: "Established but quieter — more breathing room",
+                                   zh: "成熟路线 · 相对安静" },
+  "popularity.backcountry.desc": { en: "Long stretches without other hikers — plan accordingly",
+                                    zh: "可能数小时不见人 · 提前做好准备" },
+  "popularity.backcountry.tip": {
+    en: "Solo hikers: bring a satellite messenger and tell someone your check-in time.",
+    zh: "独行者：建议携带卫星通讯器，告知联系人下山时间。",
+  },
+
+  "sidebar.popularity":         { en: "Popularity",  zh: "人流量" },
+
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
   "difficulty.moderate":        { en: "Moderate",  zh: "中等" },

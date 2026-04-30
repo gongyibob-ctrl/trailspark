@@ -1,6 +1,74 @@
-import type { Trail } from "./types";
+import type { Trail, Popularity } from "./types";
 
-export const TRAILS: Trail[] = [
+// Popularity tier per trail id. Read as a positive descriptor of the
+// experience; "Backcountry" is not a danger label, it's a feature for
+// people who want solitude (with the corresponding self-reliance).
+//
+// Calibration: based on AllTrails review counts, social-media presence,
+// and traffic-per-mile estimates. Famous-but-linear thru-hikes (PCT,
+// JMT) sit in `backcountry` because per-day-of-effort you'll see far
+// fewer people than on a 4 mi viewpoint hike.
+const POPULARITY_BY_ID: Record<string, Popularity> = {
+  // Iconic — instantly recognized; you'll have company at viewpoints
+  "half-dome": "iconic",
+  "mist-trail": "iconic",
+  "multnomah-wahkeena": "iconic",
+  "hurricane-hill": "iconic",
+  "hall-of-mosses": "iconic",
+  "smith-rock": "iconic",
+  "fern-canyon": "iconic",
+  "bumpass-hell": "iconic",
+  "mt-si": "iconic",
+  "garfield-peak": "iconic",
+  "maple-pass": "iconic",
+  ewoldsen: "iconic",
+  "sol-duc-falls": "iconic",
+  "eagle-creek": "iconic",
+  "skyline-paradise": "iconic",
+
+  // Popular — every active hiker knows these; reliable foot traffic
+  "clouds-rest": "popular",
+  "upper-yosemite-falls": "popular",
+  "cathedral-lakes": "popular",
+  "sentinel-taft": "popular",
+  "mt-whitney": "popular",
+  "cascade-pass": "popular",
+  "blue-lake": "popular",
+  "naches-peak": "popular",
+  burroughs: "popular",
+  "storm-king": "popular",
+  "mt-tam": "popular",
+  "mt-diablo": "popular",
+  "mt-baldy": "popular",
+  "san-jacinto": "popular",
+  "ryan-mountain": "popular",
+  alamere: "popular",
+  "tomales-point": "popular",
+  "south-sister": "popular",
+  "lassen-peak": "popular",
+  "high-peaks-pinnacles": "popular",
+  "andrew-molera": "popular",
+  smugglers: "popular",
+
+  // Steady — established and well-documented but with more breathing room
+  "hidden-lake": "steady",
+  heliotrope: "steady",
+  "shi-shi": "steady",
+  "high-divide": "steady",
+  "tolmie-peak": "steady",
+  wonderland: "steady",
+  timberline: "steady",
+  jmt: "steady",
+
+  // Backcountry — multi-day or genuinely remote; expect long stretches alone
+  "rae-lakes": "backcountry",
+  "tahoe-rim": "backcountry",
+  "lost-coast": "backcountry",
+  "telescope-peak": "backcountry",
+  pct: "backcountry",
+};
+
+const RAW_TRAILS: Omit<Trail, "popularity">[] = [
   // ========== Yosemite + High Sierra ==========
   {
     id: "half-dome",
@@ -923,5 +991,10 @@ export const TRAILS: Trail[] = [
     highlights: ["Seattle skyline view", "Cascades to Olympic panorama", "Year-round access"],
   },
 ];
+
+export const TRAILS: Trail[] = RAW_TRAILS.map((t) => ({
+  ...t,
+  popularity: POPULARITY_BY_ID[t.id] ?? "steady",
+}));
 
 export const TRAIL_BY_ID = Object.fromEntries(TRAILS.map((t) => [t.id, t])) as Record<string, Trail>;

@@ -28,6 +28,18 @@ export type Ecosystem =
 
 export type Season = "spring" | "summer" | "fall" | "winter";
 
+/** Popularity / traffic tier — read as a positive descriptor of the
+ *  experience, not a judgment. Iconic = lots of company; Backcountry =
+ *  more solitude (and corresponding self-reliance). */
+export type Popularity = "iconic" | "popular" | "steady" | "backcountry";
+
+export const POPULARITY_COLOR: Record<Popularity, string> = {
+  iconic: "#ee7e3e",      // ember — warm, celebratory
+  popular: "#3b82f6",     // blue — social, accessible
+  steady: "#41644e",      // forest — established, low-key
+  backcountry: "#8b5cf6", // violet — wilderness, mystery
+};
+
 export interface Trail {
   id: string;
   name: string;
@@ -42,6 +54,7 @@ export interface Trail {
   trailhead: { lat: number; lng: number };
   permitRequired: boolean;
   bestSeasons: Season[];
+  popularity: Popularity;
   description: string;
   highlights: string[];
   externalUrl?: string;

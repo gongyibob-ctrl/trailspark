@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, Mountain, Filter, X, Heart, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
-import type { Difficulty, Region, Trail, TrailType } from "@/lib/types";
-import { DIFFICULTY_COLOR } from "@/lib/types";
+import type { Difficulty, Popularity, Region, Trail, TrailType } from "@/lib/types";
+import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import clsx from "clsx";
@@ -30,6 +30,7 @@ export default function Sidebar({
   const [regions, setRegions] = useState<Set<Region>>(new Set());
   const [difficulties, setDifficulties] = useState<Set<Difficulty>>(new Set());
   const [types, setTypes] = useState<Set<TrailType>>(new Set());
+  const [popularities, setPopularities] = useState<Set<Popularity>>(new Set());
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { favorites, toggle: toggleFavorite } = useFavorites();
@@ -47,9 +48,10 @@ export default function Sidebar({
       if (regions.size && !regions.has(tr.region)) return false;
       if (difficulties.size && !difficulties.has(tr.difficulty)) return false;
       if (types.size && !types.has(tr.type)) return false;
+      if (popularities.size && !popularities.has(tr.popularity)) return false;
       return true;
     });
-  }, [trails, query, regions, difficulties, types, favoritesOnly, favorites]);
+  }, [trails, query, regions, difficulties, types, popularities, favoritesOnly, favorites]);
 
   // notify parent when filtered list changes
   useEffect(() => {
@@ -64,12 +66,13 @@ export default function Sidebar({
   };
 
   const activeFilterCount =
-    regions.size + difficulties.size + types.size + (favoritesOnly ? 1 : 0);
+    regions.size + difficulties.size + types.size + popularities.size + (favoritesOnly ? 1 : 0);
 
   const clearFilters = () => {
     setRegions(new Set());
     setDifficulties(new Set());
     setTypes(new Set());
+    setPopularities(new Set());
     setFavoritesOnly(false);
     setQuery("");
   };
@@ -184,6 +187,16 @@ export default function Sidebar({
             }))}
             active={regions}
             onToggle={(v) => toggle(regions, v, setRegions)}
+          />
+          <FilterGroup
+            label={t("sidebar.popularity")}
+            options={(["iconic","popular","steady","backcountry"] as Popularity[]).map((p) => ({
+              value: p,
+              label: t(`popularity.${p}` as StringKey),
+              color: POPULARITY_COLOR[p],
+            }))}
+            active={popularities}
+            onToggle={(v) => toggle(popularities, v, setPopularities)}
           />
           <FilterGroup
             label={t("sidebar.difficulty")}
@@ -355,6 +368,18 @@ function TrailCard({
                     <span className="text-ember-400">{t("sidebar.permit")}</span>
                   </>
                 )}
+              </div>
+              <div className="mt-1.5">
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-wider"
+                  style={{
+                    color: POPULARITY_COLOR[trail.popularity],
+                    backgroundColor: `${POPULARITY_COLOR[trail.popularity]}1c`,
+                    borderColor: `${POPULARITY_COLOR[trail.popularity]}55`,
+                  }}
+                >
+                  {t(`popularity.${trail.popularity}` as StringKey)}
+                </span>
               </div>
             </div>
           </div>

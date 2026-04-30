@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
-import { DIFFICULTY_COLOR } from "@/lib/types";
+import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
 import { POI_ICON, POI_TONE } from "@/lib/poi-icons";
@@ -208,6 +208,17 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           <Badge className="border-white/15 bg-white/5 text-white/80">
             {t(`ecosystem.${trail.ecosystem}` as StringKey)}
           </Badge>
+          <span
+            className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
+            style={{
+              color: POPULARITY_COLOR[trail.popularity],
+              backgroundColor: `${POPULARITY_COLOR[trail.popularity]}1c`,
+              borderColor: `${POPULARITY_COLOR[trail.popularity]}55`,
+            }}
+            title={t(`popularity.${trail.popularity}.desc` as StringKey)}
+          >
+            {t(`popularity.${trail.popularity}` as StringKey)}
+          </span>
           {trail.permitRequired && (
             <Badge className="border-ember-500/30 bg-ember-500/15 text-ember-400">
               <TicketCheck className="mr-1 inline h-3 w-3" />
@@ -232,6 +243,9 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
         {/* Wildfire warning — only when fires are nearby */}
         {fireWarnings.length > 0 && <FireWarning fires={fireWarnings} />}
+
+        {/* Backcountry advisory — friendly, not alarmist */}
+        {trail.popularity === "backcountry" && <BackcountryTip />}
 
         {/* Description */}
         <Section title={t("section.about")} accent="neutral" delay={1}>
@@ -923,6 +937,25 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <div className="flex items-start gap-3 text-[12px]">
       <span className="w-20 shrink-0 text-[10px] uppercase tracking-wider text-white/45">{label}</span>
       <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+function BackcountryTip() {
+  const { t } = useLocale();
+  return (
+    <div className="animate-rise rounded-xl bg-violet-500/8 px-4 py-2.5 ring-1 ring-violet-400/25">
+      <div className="flex items-start gap-2.5 text-[12px]">
+        <span className="mt-0.5 text-base leading-none">🏔</span>
+        <div>
+          <div className="font-medium text-violet-200">
+            {t("popularity.backcountry.desc")}
+          </div>
+          <div className="mt-0.5 text-[11.5px] leading-relaxed text-white/65">
+            {t("popularity.backcountry.tip")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
