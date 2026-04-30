@@ -21,6 +21,7 @@ import { getTrailPOIs } from "./trail-pois";
 import { getPermitInfo } from "./permits";
 import type { DateNormal } from "./weather";
 import type { GearItem } from "./gear";
+import { localizeGear } from "./gear-zh";
 import type { NearbyFire } from "./wildfire";
 
 export interface CopyContext {
@@ -112,10 +113,15 @@ export function formatTrailForCopy(ctx: CopyContext): string {
     out.push("");
   }
 
-  // ---- Essential gear (only the must-haves to keep the note short) ----
+  // ---- Gear: critical first (⚠ symbols stay in plain text), then essentials ----
   if (essentialGear.length > 0) {
+    const critical = essentialGear.filter((g) => g.critical);
+    const others = essentialGear.filter((g) => !g.critical);
     out.push(`🎒 ${t("offline.gearSection")}`);
-    essentialGear.forEach((g) => out.push(`   • ${g.name}`));
+    if (critical.length > 0) {
+      critical.forEach((g) => out.push(`   ⚠ ${localizeGear(g, locale).name}`));
+    }
+    others.forEach((g) => out.push(`   • ${localizeGear(g, locale).name}`));
     out.push("");
   }
 

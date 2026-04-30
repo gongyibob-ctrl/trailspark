@@ -50,6 +50,7 @@ import DatePicker from "./DatePicker";
 import ElevationProfile from "./ElevationProfile";
 import { recommendGear, groupByCategory, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
 import { CATEGORY_ICON, iconForGear } from "@/lib/gear-icons";
+import { localizeGear } from "@/lib/gear-zh";
 import clsx from "clsx";
 
 interface TrailDetailProps {
@@ -338,33 +339,46 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
                   <ul className="space-y-1">
                     {items.map((it) => {
                       const ItemIcon = iconForGear(it.name, cat);
+                      const localized = localizeGear(it, locale);
+                      const tier = it.critical ? "critical" : it.essential ? "essential" : "optional";
                       return (
                         <li
                           key={it.name}
-                          className="group flex items-start gap-2.5 rounded-md px-1.5 py-1 text-[12.5px] transition-colors hover:bg-white/5"
+                          className={clsx(
+                            "group flex items-start gap-2.5 rounded-md px-1.5 py-1 text-[12.5px] transition-colors hover:bg-white/5",
+                          )}
                         >
                           <span
                             className={clsx(
                               "mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1 transition-all",
-                              it.essential
-                                ? "bg-ember-500/15 text-ember-300 ring-ember-500/25 group-hover:bg-ember-500/25"
-                                : "bg-white/5 text-white/60 ring-white/8 group-hover:bg-white/10 group-hover:text-white/80",
+                              tier === "critical"
+                                ? "bg-red-500/20 text-red-200 ring-red-400/40 shadow-[0_0_10px_rgba(248,113,113,0.25)] group-hover:bg-red-500/30"
+                                : tier === "essential"
+                                  ? "bg-ember-500/15 text-ember-300 ring-ember-500/25 group-hover:bg-ember-500/25"
+                                  : "bg-white/5 text-white/60 ring-white/8 group-hover:bg-white/10 group-hover:text-white/80",
                             )}
                           >
                             <ItemIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-white/90">{it.name}</span>
-                              {it.essential && (
+                              <span className={clsx(tier === "critical" ? "text-white" : "text-white/90")}>
+                                {localized.name}
+                              </span>
+                              {tier === "critical" && (
+                                <span className="inline-flex items-center gap-0.5 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-red-200 ring-1 ring-red-400/30">
+                                  ⚠ {t("gear.critical")}
+                                </span>
+                              )}
+                              {tier === "essential" && (
                                 <span className="text-[9.5px] font-semibold uppercase tracking-wider text-ember-400/85">
                                   {t("gear.essential")}
                                 </span>
                               )}
                             </div>
-                            {it.why && (
+                            {localized.why && (
                               <div className="mt-0.5 text-[11px] italic text-white/45">
-                                {it.why}
+                                {localized.why}
                               </div>
                             )}
                           </div>

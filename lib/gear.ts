@@ -15,6 +15,9 @@ export interface GearItem {
   name: string;
   category: GearCategory;
   essential: boolean;
+  /** Life-critical: dehydration / hypothermia / getting lost in the dark / no first aid.
+   *  Visually flagged stronger than `essential` so users can't miss it. */
+  critical?: boolean;
   why?: string;
 }
 
@@ -31,16 +34,16 @@ export const CATEGORY_LABEL: Record<GearCategory, string> = {
 };
 
 const TEN_ESSENTIALS: GearItem[] = [
-  { name: "Topographic map", category: "navigation", essential: true },
-  { name: "Compass or GPS", category: "navigation", essential: true },
+  { name: "Topographic map", category: "navigation", essential: true, critical: true },
+  { name: "Compass or GPS", category: "navigation", essential: true, critical: true },
   { name: "Sun hat & sunglasses", category: "clothing", essential: true },
   { name: "SPF 30+ sunscreen", category: "safety", essential: true },
-  { name: "Insulating layer (fleece or puffy)", category: "clothing", essential: true },
-  { name: "Headlamp + spare batteries", category: "electronics", essential: true },
-  { name: "First aid kit", category: "safety", essential: true },
-  { name: "Lighter or matches (waterproof)", category: "safety", essential: true },
+  { name: "Insulating layer (fleece or puffy)", category: "clothing", essential: true, critical: true },
+  { name: "Headlamp + spare batteries", category: "electronics", essential: true, critical: true },
+  { name: "First aid kit", category: "safety", essential: true, critical: true },
+  { name: "Lighter or matches (waterproof)", category: "safety", essential: true, critical: true },
   { name: "Multi-tool / knife", category: "extras", essential: true },
-  { name: "Emergency shelter (bivvy or space blanket)", category: "safety", essential: true },
+  { name: "Emergency shelter (bivvy or space blanket)", category: "safety", essential: true, critical: true },
 ];
 
 interface GearContext {
@@ -54,8 +57,8 @@ function dayHikeBase(): GearItem[] {
     { name: "Moisture-wicking shirt", category: "clothing", essential: true },
     { name: "Hiking shorts or convertible pants", category: "clothing", essential: true },
     { name: "Daypack (15–25L)", category: "extras", essential: true },
-    { name: "Water bottles (2–3L total capacity)", category: "hydration", essential: true },
-    { name: "High-calorie snacks (bars, trail mix, jerky)", category: "food", essential: true },
+    { name: "Water bottles (2–3L total capacity)", category: "hydration", essential: true, critical: true },
+    { name: "High-calorie snacks (bars, trail mix, jerky)", category: "food", essential: true, critical: true },
     { name: "Lunch + extra meal", category: "food", essential: false },
   ];
 }
@@ -65,13 +68,13 @@ function multiDayBase(): GearItem[] {
     { name: "Sturdy mid-cut hiking boots (broken in)", category: "footwear", essential: true },
     { name: "Camp shoes (sandals or running shoes)", category: "footwear", essential: false },
     { name: "Multi-day backpack (50–65L)", category: "extras", essential: true },
-    { name: "3-season tent or tarp shelter", category: "shelter", essential: true },
-    { name: "Sleeping bag (rated to expected low + 10°F)", category: "shelter", essential: true },
+    { name: "3-season tent or tarp shelter", category: "shelter", essential: true, critical: true },
+    { name: "Sleeping bag (rated to expected low + 10°F)", category: "shelter", essential: true, critical: true },
     { name: "Sleeping pad (R-value matched to season)", category: "shelter", essential: true },
     { name: "Stove + fuel canister", category: "food", essential: true },
     { name: "Cookpot + spork", category: "food", essential: true },
     { name: "Lightweight bowl / mug", category: "food", essential: true },
-    { name: "Water filter or chemical treatment", category: "hydration", essential: true },
+    { name: "Water filter or chemical treatment", category: "hydration", essential: true, critical: true },
     { name: "Bear canister or Ursack (where required)", category: "food", essential: true },
     { name: "Trekking poles", category: "extras", essential: false },
     { name: "Quick-dry towel", category: "extras", essential: false },
@@ -89,7 +92,7 @@ function thruHikeAdditions(): GearItem[] {
     { name: "Sleep clothes (dry, separate from hike clothes)", category: "clothing", essential: true },
     { name: "Lightweight battery pack (10000mAh+)", category: "electronics", essential: true },
     { name: "Phone with offline maps (FarOut/Gaia)", category: "navigation", essential: true },
-    { name: "Satellite messenger (Garmin inReach / Zoleo)", category: "safety", essential: true, why: "Out of cell range for days; emergency comms required" },
+    { name: "Satellite messenger (Garmin inReach / Zoleo)", category: "safety", essential: true, critical: true, why: "Out of cell range for days; emergency comms required" },
     { name: "Bear canister (where required)", category: "food", essential: true },
     { name: "Ice axe + microspikes (early season Sierra/Cascades)", category: "safety", essential: false, why: "Snowfields linger into July at higher passes" },
   ];
@@ -128,16 +131,16 @@ function ecosystemAdditions(trail: Trail, season: Season): GearItem[] {
       break;
     case "desert":
       items.push(
-        { name: "Wide-brim sun hat", category: "clothing", essential: true, why: "No shade — sun protection is non-optional" },
+        { name: "Wide-brim sun hat", category: "clothing", essential: true, critical: true, why: "No shade — sun protection is non-optional" },
         { name: "Long-sleeve sun hoody (UPF rated)", category: "clothing", essential: true },
-        { name: "Extra water capacity (4L+ per person)", category: "hydration", essential: true, why: "Desert hikes need 1L/hour minimum" },
-        { name: "Electrolyte tablets", category: "hydration", essential: true },
+        { name: "Extra water capacity (4L+ per person)", category: "hydration", essential: true, critical: true, why: "Desert hikes need 1L/hour minimum" },
+        { name: "Electrolyte tablets", category: "hydration", essential: true, critical: true },
         { name: "Sun gloves", category: "clothing", essential: false },
       );
       break;
     case "coastal":
       items.push(
-        { name: "Tide chart printout", category: "navigation", essential: true, why: "Several coastal sections are impassable at high tide" },
+        { name: "Tide chart printout", category: "navigation", essential: true, critical: true, why: "Several coastal sections are impassable at high tide" },
         { name: "Quick-dry clothing (gets wet)", category: "clothing", essential: true },
         { name: "Sandals or wading shoes", category: "footwear", essential: false },
         { name: "Wind shell (constant onshore wind)", category: "clothing", essential: true },
@@ -163,10 +166,10 @@ function seasonAdditions(season: Season, trail: Trail): GearItem[] {
   const items: GearItem[] = [];
   if (season === "winter") {
     items.push(
-      { name: "Microspikes or crampons", category: "safety", essential: true, why: "Most West Coast trails have icy patches in winter" },
-      { name: "Insulated waterproof boots", category: "footwear", essential: true },
-      { name: "Insulated gloves (waterproof)", category: "clothing", essential: true },
-      { name: "Warm hat (covers ears)", category: "clothing", essential: true },
+      { name: "Microspikes or crampons", category: "safety", essential: true, critical: true, why: "Most West Coast trails have icy patches in winter" },
+      { name: "Insulated waterproof boots", category: "footwear", essential: true, critical: true },
+      { name: "Insulated gloves (waterproof)", category: "clothing", essential: true, critical: true },
+      { name: "Warm hat (covers ears)", category: "clothing", essential: true, critical: true },
       { name: "Hand warmers", category: "extras", essential: false },
     );
   }
