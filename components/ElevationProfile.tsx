@@ -99,7 +99,7 @@ function Chart({ profile }: { profile: Profile }) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/12">
+    <div className="overflow-hidden rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
         <span className="flex items-center gap-1.5 truncate">
           <TrendingUp className="h-3 w-3 shrink-0" />

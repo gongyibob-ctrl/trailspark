@@ -132,7 +132,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
       className="absolute right-0 top-0 z-30 flex h-full w-[460px] animate-slide-in-right flex-col glass"
     >
       {/* Header */}
-      <div className="relative px-6 pb-4 pt-5">
+      <div className="relative px-5 pb-4 pt-5">
         <div className="absolute right-3 top-3 flex items-center gap-1">
           <ShareButton trailId={trail.id} />
           <button
@@ -183,7 +183,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
       </div>
 
       {/* Content scroll */}
-      <div className="flex-1 space-y-5 overflow-y-auto px-6 pb-6 pt-1">
+      <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-6 pt-2">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 [&>*]:animate-rise" style={stagger(0)}>
           <Stat icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={`${trail.lengthMiles} mi`} />
@@ -196,17 +196,17 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         </div>
 
         {/* Description */}
-        <Section title="About" delay={1}>
+        <Section title="About" accent="neutral" delay={1}>
           <p className="text-[13.5px] leading-relaxed text-white/80">{trail.description}</p>
         </Section>
 
         {/* Elevation profile */}
-        <Section title="Elevation Profile" delay={2}>
+        <Section title="Elevation Profile" accent="forest" delay={2}>
           <ElevationProfile trailId={trail.id} />
         </Section>
 
         {/* Highlights */}
-        <Section title="Highlights" delay={3}>
+        <Section title="Highlights" accent="ember" delay={3}>
           <ul className="space-y-1.5">
             {trail.highlights.map((h, i) => (
               <li
@@ -224,6 +224,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         {/* Best season hint */}
         <Section
           title="Best Time to Hike"
+          accent="forest"
           delay={4}
           right={
             <BestSeasonsLine seasons={trail.bestSeasons} />
@@ -235,6 +236,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         {/* Weather for the picked date */}
         <Section
           title={`Weather around ${formatPickedShort(date)}`}
+          accent="blue"
           delay={5}
           right={
             <a
@@ -261,6 +263,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         {/* Gear */}
         <Section
           title={`Gear for ${season} ${trail.type === "day" ? "day hike" : trail.type === "thru-hike" ? "thru-hike" : "backpack"}`}
+          accent="ember"
           delay={6}
         >
           {gear &&
@@ -349,27 +352,45 @@ function stagger(i: number): React.CSSProperties {
   return { ["--stagger" as any]: `${0.1 + i * 0.06}s`, animationDelay: `${0.08 + i * 0.06}s` };
 }
 
+type SectionAccent = "neutral" | "forest" | "ember" | "blue";
+
+const ACCENT_BAR: Record<SectionAccent, string> = {
+  neutral: "bg-white/40",
+  forest: "bg-forest-300",
+  ember: "bg-ember-400",
+  blue: "bg-blue-400",
+};
+
 function Section({
   title,
+  accent = "neutral",
   right,
   children,
   delay = 0,
+  flush = false,
 }: {
   title: string;
+  accent?: SectionAccent;
   right?: React.ReactNode;
   children: React.ReactNode;
   delay?: number;
+  /** When true, content has its own padding (chart fills card) — section adds none. */
+  flush?: boolean;
 }) {
   return (
-    <div className="animate-rise" style={{ animationDelay: `${0.08 + delay * 0.07}s` }}>
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
+    <section
+      className="animate-rise rounded-xl bg-white/[0.03] ring-1 ring-white/10"
+      style={{ animationDelay: `${0.08 + delay * 0.07}s` }}
+    >
+      <header className="flex items-center justify-between gap-2 px-4 pt-3.5 pb-2">
+        <h3 className="flex items-center gap-2 text-[13.5px] font-semibold tracking-tight text-white">
+          <span className={`h-3.5 w-[3px] rounded-full ${ACCENT_BAR[accent]}`} />
           {title}
         </h3>
-        {right}
-      </div>
-      {children}
-    </div>
+        {right && <div className="shrink-0">{right}</div>}
+      </header>
+      <div className={flush ? "" : "px-4 pb-4"}>{children}</div>
+    </section>
   );
 }
 
@@ -388,12 +409,12 @@ function Badge({ className, children }: { className?: string; children: React.Re
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-black/35 px-3 py-2.5 ring-1 ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/60">
+    <div className="rounded-xl bg-black/30 px-3.5 py-2.5 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/55">
         {icon}
         {label}
       </div>
-      <div className="mt-0.5 text-[15px] font-semibold text-white">{value}</div>
+      <div className="mt-1 text-[16px] font-semibold tabular-nums text-white">{value}</div>
     </div>
   );
 }
@@ -413,7 +434,7 @@ function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> 
   return (
     <div
       key={`${normal.month}-${normal.day}`}
-      className="animate-rise rounded-xl bg-white/[0.04] p-4 ring-1 ring-white/15"
+      className="animate-rise rounded-lg bg-black/25 p-4 ring-1 ring-white/8"
     >
       <div className="flex items-end justify-between">
         <div>
@@ -562,7 +583,7 @@ function ClimateChart({
   const selX = xAt(highlightMonth - 1);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/12">
+    <div className="mt-3 overflow-hidden rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
         <span className="truncate">Year-round avg high / low °F</span>
         <span className="shrink-0 whitespace-nowrap">
@@ -708,7 +729,7 @@ function ClimateChart({
 
 function Forecast({ days }: { days: ForecastDay[] }) {
   return (
-    <div className="mt-3 rounded-lg bg-white/5 p-3 ring-1 ring-white/12">
+    <div className="mt-3 rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
       <div className="mb-2 text-[10px] uppercase tracking-wider text-white/40">
         Live 7-day forecast at trailhead
       </div>
