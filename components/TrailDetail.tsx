@@ -48,9 +48,10 @@ import {
 } from "@/lib/dates";
 import DatePicker from "./DatePicker";
 import ElevationProfile from "./ElevationProfile";
-import { recommendGear, groupByCategory, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
+import { recommendGear, groupByCategory, totalGrams, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
 import { CATEGORY_ICON, iconForGear } from "@/lib/gear-icons";
 import { localizeGear } from "@/lib/gear-zh";
+import { usePackedGear } from "@/lib/packed";
 import clsx from "clsx";
 
 interface TrailDetailProps {
@@ -60,7 +61,7 @@ interface TrailDetailProps {
 
 export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   const { favorites, toggle: toggleFavorite } = useFavorites();
-  const { locale, t, fmtDistance, fmtElevation, fmtTemp, fmtPrecip, fmtWind, tempValue } = useLocale();
+  const { locale, t, fmtDistance, fmtElevation, fmtTemp, fmtPrecip, fmtWind, fmtWeight, tempValue } = useLocale();
   const [date, setDate] = useState<PickedDate>(() =>
     trail ? initialDateForBestSeasons(trail.bestSeasons) : { month: 7, day: 15 },
   );
@@ -310,86 +311,13 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         </Section>
 
         {/* Gear */}
-        <Section
-          title={t("section.gearFor", {
-            season: t(`seasonShort.${season}` as StringKey),
-            type: t(`typeShort.${trail.type}` as StringKey),
-          })}
-          accent="ember"
-          delay={6}
-        >
-          {gear &&
-            (Object.keys(CATEGORY_LABEL) as GearCategory[]).map((cat, ci) => {
-              const items = gear[cat];
-              if (!items || items.length === 0) return null;
-              const CatIcon = CATEGORY_ICON[cat];
-              return (
-                <div
-                  key={cat}
-                  className="mb-4 animate-rise"
-                  style={{ animationDelay: `${0.32 + ci * 0.05}s` }}
-                >
-                  <div className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                    <CatIcon className="h-3.5 w-3.5 text-forest-300" />
-                    {t(`gearCat.${cat}` as StringKey)}
-                    <span className="ml-auto text-[10px] font-normal text-white/30">
-                      {items.length}
-                    </span>
-                  </div>
-                  <ul className="space-y-1">
-                    {items.map((it) => {
-                      const ItemIcon = iconForGear(it.name, cat);
-                      const localized = localizeGear(it, locale);
-                      const tier = it.critical ? "critical" : it.essential ? "essential" : "optional";
-                      return (
-                        <li
-                          key={it.name}
-                          className={clsx(
-                            "group flex items-start gap-2.5 rounded-md px-1.5 py-1 text-[12.5px] transition-colors hover:bg-white/5",
-                          )}
-                        >
-                          <span
-                            className={clsx(
-                              "mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1 transition-all",
-                              tier === "critical"
-                                ? "bg-red-500/20 text-red-200 ring-red-400/40 shadow-[0_0_10px_rgba(248,113,113,0.25)] group-hover:bg-red-500/30"
-                                : tier === "essential"
-                                  ? "bg-ember-500/15 text-ember-300 ring-ember-500/25 group-hover:bg-ember-500/25"
-                                  : "bg-white/5 text-white/60 ring-white/8 group-hover:bg-white/10 group-hover:text-white/80",
-                            )}
-                          >
-                            <ItemIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className={clsx(tier === "critical" ? "text-white" : "text-white/90")}>
-                                {localized.name}
-                              </span>
-                              {tier === "critical" && (
-                                <span className="inline-flex items-center gap-0.5 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-red-200 ring-1 ring-red-400/30">
-                                  ⚠ {t("gear.critical")}
-                                </span>
-                              )}
-                              {tier === "essential" && (
-                                <span className="text-[9.5px] font-semibold uppercase tracking-wider text-ember-400/85">
-                                  {t("gear.essential")}
-                                </span>
-                              )}
-                            </div>
-                            {localized.why && (
-                              <div className="mt-0.5 text-[11px] italic text-white/45">
-                                {localized.why}
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-        </Section>
+        <GearSection
+          trailId={trail.id}
+          gear={gear}
+          gearItems={gearItems}
+          season={season}
+          type={trail.type}
+        />
 
         {trail.externalUrl && (
           <a
@@ -1029,6 +957,212 @@ function FireWarning({ fires }: { fires: NearbyFire[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function GearSection({
+  trailId,
+  gear,
+  gearItems,
+  season,
+  type,
+}: {
+  trailId: string;
+  gear: Record<GearCategory, ReturnType<typeof recommendGear>>;
+  gearItems: ReturnType<typeof recommendGear>;
+  season: Season;
+  type: Trail["type"];
+}) {
+  const { t, locale, fmtWeight, fmtWeightShort } = useLocale();
+  const { packed, toggle, clearAll } = usePackedGear(trailId);
+  const [copiedList, setCopiedList] = useState(false);
+
+  const total = totalGrams(gearItems);
+  const packedTotal = gearItems.reduce(
+    (sum, it) => sum + (packed.has(it.name) ? it.g ?? 0 : 0),
+    0,
+  );
+
+  const handleCopyList = async () => {
+    const lines = [
+      `🎒 ${t("section.gearFor", {
+        season: t(`seasonShort.${season}` as StringKey),
+        type: t(`typeShort.${type}` as StringKey),
+      })}`,
+      `${t("gear.totalWeight", { w: fmtWeight(total) })}`,
+      "",
+    ];
+    (Object.keys(CATEGORY_LABEL) as GearCategory[]).forEach((cat) => {
+      const items = gear[cat];
+      if (!items || items.length === 0) return;
+      lines.push(`— ${t(`gearCat.${cat}` as StringKey)}`);
+      items.forEach((it) => {
+        const localized = localizeGear(it, locale);
+        const prefix = it.critical ? "☐⚠" : "☐";
+        const wt = it.g ? `  (${fmtWeightShort(it.g)})` : "";
+        lines.push(`${prefix} ${localized.name}${wt}`);
+      });
+      lines.push("");
+    });
+    const text = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedList(true);
+      window.setTimeout(() => setCopiedList(false), 2000);
+    } catch {
+      window.prompt("Copy this:", text);
+    }
+  };
+
+  return (
+    <Section
+      title={t("section.gearFor", {
+        season: t(`seasonShort.${season}` as StringKey),
+        type: t(`typeShort.${type}` as StringKey),
+      })}
+      accent="ember"
+      delay={6}
+      right={
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-white/55">
+            {t("gear.totalWeight", { w: fmtWeight(total) })}
+          </span>
+          {packed.size > 0 && (
+            <>
+              <span className="text-white/25">·</span>
+              <span className="text-forest-200">
+                {t("gear.packed", { n: packed.size })}
+              </span>
+              <button
+                onClick={clearAll}
+                className="rounded px-1.5 py-0.5 text-[9.5px] uppercase tracking-wider text-white/40 hover:bg-white/10 hover:text-white"
+              >
+                {t("gear.resetChecks")}
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleCopyList}
+            title={t("gear.copyListTooltip")}
+            className={clsx(
+              "rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider transition",
+              copiedList
+                ? "bg-forest-500/30 text-forest-100"
+                : "text-white/45 hover:bg-white/10 hover:text-white",
+            )}
+          >
+            {copiedList ? <Check className="h-3 w-3" /> : t("gear.copyList")}
+          </button>
+        </div>
+      }
+    >
+      {(Object.keys(CATEGORY_LABEL) as GearCategory[]).map((cat, ci) => {
+        const items = gear[cat];
+        if (!items || items.length === 0) return null;
+        const CatIcon = CATEGORY_ICON[cat];
+        return (
+          <div
+            key={cat}
+            className="mb-4 animate-rise"
+            style={{ animationDelay: `${0.32 + ci * 0.05}s` }}
+          >
+            <div className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/55">
+              <CatIcon className="h-3.5 w-3.5 text-forest-300" />
+              {t(`gearCat.${cat}` as StringKey)}
+              <span className="ml-auto text-[10px] font-normal text-white/30">{items.length}</span>
+            </div>
+            <ul className="space-y-1">
+              {items.map((it) => (
+                <GearRow key={it.name} item={it} category={cat} packed={packed.has(it.name)} onToggle={() => toggle(it.name)} />
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </Section>
+  );
+}
+
+function GearRow({
+  item,
+  category,
+  packed,
+  onToggle,
+}: {
+  item: ReturnType<typeof recommendGear>[number];
+  category: GearCategory;
+  packed: boolean;
+  onToggle: () => void;
+}) {
+  const { t, locale, fmtWeightShort } = useLocale();
+  const ItemIcon = iconForGear(item.name, category);
+  const localized = localizeGear(item, locale);
+  const tier = item.critical ? "critical" : item.essential ? "essential" : "optional";
+
+  return (
+    <li>
+      <button
+        onClick={onToggle}
+        aria-pressed={packed}
+        className={clsx(
+          "group flex w-full items-start gap-2.5 rounded-md px-1.5 py-1 text-left text-[12.5px] transition-colors hover:bg-white/5",
+          packed && "opacity-55",
+        )}
+      >
+        <span
+          className={clsx(
+            "mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1 transition-all",
+            packed
+              ? "bg-forest-500/25 text-forest-200 ring-forest-400/35"
+              : tier === "critical"
+                ? "bg-red-500/20 text-red-200 ring-red-400/40 shadow-[0_0_10px_rgba(248,113,113,0.25)] group-hover:bg-red-500/30"
+                : tier === "essential"
+                  ? "bg-ember-500/15 text-ember-300 ring-ember-500/25 group-hover:bg-ember-500/25"
+                  : "bg-white/5 text-white/60 ring-white/8 group-hover:bg-white/10 group-hover:text-white/80",
+          )}
+        >
+          {packed ? (
+            <Check className="h-3.5 w-3.5" strokeWidth={2.4} />
+          ) : (
+            <ItemIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className={clsx(
+                tier === "critical" ? "text-white" : "text-white/90",
+                packed && "line-through decoration-white/40",
+              )}
+            >
+              {localized.name}
+            </span>
+            {item.g != null && (
+              <span className="ml-auto shrink-0 font-mono text-[10px] text-white/40">
+                {fmtWeightShort(item.g)}
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            {tier === "critical" && (
+              <span className="inline-flex items-center gap-0.5 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-red-200 ring-1 ring-red-400/30">
+                ⚠ {t("gear.critical")}
+              </span>
+            )}
+            {tier === "essential" && (
+              <span className="text-[9.5px] font-semibold uppercase tracking-wider text-ember-400/85">
+                {t("gear.essential")}
+              </span>
+            )}
+          </div>
+          {localized.why && (
+            <div className="mt-0.5 text-[11px] italic text-white/45">
+              {localized.why}
+            </div>
+          )}
+        </div>
+      </button>
+    </li>
   );
 }
 

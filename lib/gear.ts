@@ -19,6 +19,9 @@ export interface GearItem {
    *  Visually flagged stronger than `essential` so users can't miss it. */
   critical?: boolean;
   why?: string;
+  /** Rough weight per unit, in grams. Used for the running pack-weight estimate.
+   *  Intentionally approximate — these are hiking benchmarks, not precise specs. */
+  g?: number;
 }
 
 export const CATEGORY_LABEL: Record<GearCategory, string> = {
@@ -58,6 +61,103 @@ const REMOTE_ONLY_CRITICAL = new Set([
   "Insulating layer (fleece or puffy)",
   "Emergency shelter (bivvy or space blanket)",
 ]);
+
+// Realistic per-item weight in grams. Sources: REI specs, common UL/standard
+// kits, manufacturer ranges averaged. Approximate — used for the running pack
+// estimate, not for serious gram-counting.
+const GEAR_GRAMS: Record<string, number> = {
+  // Footwear
+  "Trail running shoes or light hikers": 700,
+  "Sturdy mid-cut hiking boots (broken in)": 1100,
+  "Camp shoes (sandals or running shoes)": 350,
+  "Camp shoes (foam clogs)": 200,
+  "Two pairs trail runners (rotate)": 1400,
+  "Insulated waterproof boots": 1500,
+  "Sandals or wading shoes": 300,
+  "Gaiters (mud + spring runoff)": 200,
+
+  // Clothing
+  "Moisture-wicking shirt": 150,
+  "Hiking shorts or convertible pants": 300,
+  "Sun hat & sunglasses": 130,
+  "Wide-brim sun hat": 100,
+  "Sun hoody (UPF rated)": 200,
+  "Long-sleeve sun hoody (UPF rated)": 200,
+  "Insulating layer (fleece or puffy)": 350,
+  "Insulating midlayer (fleece or puffy)": 350,
+  "Insulated puffy (down or synthetic)": 400,
+  "Down puffy jacket": 350,
+  "Wind shell": 100,
+  "Wind shell (constant onshore wind)": 100,
+  "Lightweight rain shell": 250,
+  "Hardshell rain jacket (waterproof)": 350,
+  "Light rain jacket (fog drip is constant)": 200,
+  "Rain pants": 200,
+  "Quick-dry synthetic layers (no cotton)": 200,
+  "Quick-dry clothing (gets wet)": 150,
+  "Beanie + lightweight gloves": 100,
+  "Lightweight gloves": 50,
+  "Insulated gloves (waterproof)": 150,
+  "Sun gloves": 40,
+  "Warm hat (covers ears)": 80,
+  "Buff / neck gaiter (sun + wind)": 30,
+  "Sleep clothes (dry, separate from hike clothes)": 250,
+
+  // Navigation
+  "Topographic map": 50,
+  "Compass or GPS": 50,
+  "Tide chart printout": 10,
+  "Phone with offline maps (FarOut/Gaia)": 220,
+  "Printed/saved permit": 10,
+
+  // Hydration
+  "Water bottles (2–3L total capacity)": 2700, // includes water
+  "Extra water capacity (4L+ per person)": 4200,
+  "Water filter or chemical treatment": 200,
+  "Electrolyte tablets": 30,
+
+  // Food
+  "High-calorie snacks (bars, trail mix, jerky)": 500,
+  "Lunch + extra meal": 600,
+  "Stove + fuel canister": 300,
+  "Cookpot + spork": 200,
+  "Lightweight bowl / mug": 100,
+  "Bear canister or Ursack (where required)": 1100,
+  "Bear canister (where required)": 1100,
+  "Resupply strategy + maildrops": 0,
+
+  // Safety
+  "SPF 30+ sunscreen": 100,
+  "First aid kit": 300,
+  "Lighter or matches (waterproof)": 30,
+  "Emergency shelter (bivvy or space blanket)": 100,
+  "Microspikes (snowfields above 10k ft into July)": 400,
+  "Microspikes or crampons": 500,
+  "Ice axe + microspikes (early season Sierra/Cascades)": 800,
+  "Satellite messenger (Garmin inReach / Zoleo)": 100,
+  "Bug head net (mosquito season July–Aug)": 30,
+  "Insect repellent (mosquitoes near streams)": 80,
+  "Tick check awareness (lyme present in CA)": 0,
+
+  // Shelter
+  "3-season tent or tarp shelter": 1800,
+  "Sleeping bag (rated to expected low + 10°F)": 900,
+  "Sleeping pad (R-value matched to season)": 500,
+
+  // Electronics
+  "Headlamp + spare batteries": 100,
+  "Lightweight battery pack (10000mAh+)": 200,
+
+  // Extras
+  "Daypack (15–25L)": 600,
+  "Multi-day backpack (50–65L)": 1800,
+  "Multi-tool / knife": 90,
+  "Trekking poles": 450,
+  "Quick-dry towel": 60,
+  "Wag bag / trowel for human waste": 80,
+  "Pack rain cover": 100,
+  "Hand warmers": 30,
+};
 
 function needsRemoteEssentials(trail: Trail): boolean {
   if (trail.type !== "day") return true; // any overnight stay
@@ -233,7 +333,9 @@ export function recommendGear(trail: Trail, season: Season): GearItem[] {
   // Dedupe by name (later additions take precedence)
   const dedup = new Map<string, GearItem>();
   for (const it of items) dedup.set(it.name, it);
-  const all = Array.from(dedup.values());
+  const all = Array.from(dedup.values()).map((it) =>
+    GEAR_GRAMS[it.name] != null && it.g == null ? { ...it, g: GEAR_GRAMS[it.name] } : it,
+  );
 
   // Upgrade context-dependent items to critical on remote / alpine / long trails
   if (needsRemoteEssentials(trail)) {
@@ -242,6 +344,11 @@ export function recommendGear(trail: Trail, season: Season): GearItem[] {
     );
   }
   return all;
+}
+
+/** Total gear weight in grams. */
+export function totalGrams(items: GearItem[]): number {
+  return items.reduce((sum, it) => sum + (it.g ?? 0), 0);
 }
 
 export function groupByCategory(items: GearItem[]): Record<GearCategory, GearItem[]> {

@@ -90,6 +90,12 @@ export const STRINGS = {
   // Gear
   "gear.essential":             { en: "essential", zh: "必备" },
   "gear.critical":              { en: "critical",  zh: "性命攸关" },
+  "gear.totalWeight":           { en: "≈ {w}",     zh: "约 {w}" },
+  "gear.packed":                 { en: "{n} packed",  zh: "已装 {n}" },
+  "gear.resetChecks":            { en: "Reset",       zh: "重置" },
+  "gear.copyList":               { en: "Copy pack list", zh: "复制装备清单" },
+  "gear.copyListTooltip":        { en: "Copy just the gear (with checkboxes for Notes)",
+                                    zh: "只复制装备清单（带 Notes 可用的勾选框）" },
   "gear.officialLink":          { en: "Official trail info", zh: "官方信息" },
   "gear.trailhead":             { en: "Trailhead: {coords}", zh: "起点坐标：{coords}" },
   "gear.popup.click":           { en: "Click to view full details", zh: "点击查看完整详情" },
@@ -308,6 +314,30 @@ export function fmtWind(mph: number, locale: Locale): string {
   return `${Math.round(mph)} mph`;
 }
 
+const G_TO_LB = 0.00220462;
+
+/** Pack weight: shows kg in zh and lb in en, with one decimal for the totals. */
+export function fmtWeight(grams: number, locale: Locale): string {
+  if (locale === "zh") {
+    if (grams < 1000) return `${grams} 克`;
+    return `${(grams / 1000).toFixed(1)} 公斤`;
+  }
+  // English: under 1 lb in oz, otherwise lb with one decimal
+  const lb = grams * G_TO_LB;
+  if (lb < 1) return `${Math.round(lb * 16)} oz`;
+  return `${lb.toFixed(1)} lb`;
+}
+
+/** Compact per-item weight string used inline (e.g., "350g"). */
+export function fmtWeightShort(grams: number, locale: Locale): string {
+  if (locale === "zh") {
+    if (grams < 1000) return `${grams}克`;
+    return `${(grams / 1000).toFixed(1)}kg`;
+  }
+  if (grams < 454) return `${Math.round(grams * 0.035274)}oz`;
+  return `${(grams * G_TO_LB).toFixed(1)}lb`;
+}
+
 // ---------------- Locale hook ----------------
 
 function read(): Locale {
@@ -357,6 +387,8 @@ export function useLocale() {
     tempValue: (f: number) => tempValue(f, locale),
     fmtPrecip: (inches: number) => fmtPrecip(inches, locale),
     fmtWind: (mph: number) => fmtWind(mph, locale),
+    fmtWeight: (g: number) => fmtWeight(g, locale),
+    fmtWeightShort: (g: number) => fmtWeightShort(g, locale),
   };
 }
 
