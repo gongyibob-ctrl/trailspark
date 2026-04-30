@@ -113,6 +113,9 @@ export default function Page() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-forest-950 [height:100dvh]">
+      <h1 className="sr-only">
+        Trailspark — interactive map of 75 hand-curated hiking trails on the US West Coast
+      </h1>
       <Map
         trails={filteredTrails}
         userTrails={uploads}
