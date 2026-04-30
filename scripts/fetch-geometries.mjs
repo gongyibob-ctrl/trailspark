@@ -24,7 +24,9 @@ const OUT_PATH = resolve(ROOT, "lib/geometries.json");
 // Per-trail search hints. radiusKm tuned to trail length (longer trails span huge areas).
 const SEARCH_HINTS = {
   // Yosemite + Sierra
-  "half-dome":         { name: "Half Dome",                            radiusKm: 8 },
+  // Half Dome: stitch in Mist Trail + JMT segments so the line extends from
+  // Happy Isles all the way to the summit, not just the Sub-Dome cables.
+  "half-dome":         { name: "Half Dome|Mist Trail|John Muir Trail", radiusKm: 8 },
   "clouds-rest":       { name: "Cloud[’']?s Rest",                 radiusKm: 8 },
   "mist-trail":        { name: "Mist Trail",                            radiusKm: 6 },
   "upper-yosemite-falls": { name: "Yosemite Falls Trail|Upper Yosemite Falls", radiusKm: 5 },
@@ -47,7 +49,7 @@ const SEARCH_HINTS = {
   "hurricane-hill":    { name: "Hurricane Hill",                        radiusKm: 5 },
   "storm-king":        { name: "Storm King",                            radiusKm: 5 },
   "shi-shi":           { name: "Shi Shi",                               radiusKm: 8 },
-  "high-divide":       { name: "High Divide|Seven Lakes Basin",         radiusKm: 15 },
+  "high-divide":       { name: "High Divide|Seven Lakes Basin|Sol Duc River Trail", radiusKm: 15 },
   "sol-duc-falls":     { name: "Sol Duc",                               radiusKm: 5 },
 
   // North Cascades
@@ -55,12 +57,14 @@ const SEARCH_HINTS = {
   "cascade-pass":      { name: "Cascade Pass|Sahale",                   radiusKm: 10 },
   "blue-lake":         { name: "Blue Lake Trail",                       radiusKm: 5 },
   "hidden-lake":       { name: "Hidden Lake",                           radiusKm: 8 },
-  "heliotrope":        { name: "Heliotrope Ridge",                      radiusKm: 5 },
+  // Pull in Coleman Glacier (the climbers' continuation) so the line reaches
+  // down to the actual Glacier Creek trailhead parking.
+  "heliotrope":        { name: "Heliotrope Ridge|Coleman Glacier",       radiusKm: 6 },
 
   // Oregon
   "timberline":        { name: "Timberline Trail",                      radiusKm: 25 },
   "garfield-peak":     { name: "Garfield Peak",                         radiusKm: 5 },
-  "south-sister":      { name: "South Sister",                          radiusKm: 12 },
+  "south-sister":      { name: "South Sister|Devils Lake Trail",        radiusKm: 12 },
   "eagle-creek":       { name: "Eagle Creek Trail",                     radiusKm: 12 },
   "multnomah-wahkeena": { name: "Wahkeena|Multnomah",                   radiusKm: 5 },
   "smith-rock":        { name: "Misery Ridge",                          radiusKm: 5 },
@@ -75,7 +79,7 @@ const SEARCH_HINTS = {
   "ryan-mountain":     { name: "Ryan Mountain",                         radiusKm: 4 },
   "telescope-peak":    { name: "Telescope Peak",                        radiusKm: 8 },
   "san-jacinto":       { name: "San Jacinto Peak|Mount San Jacinto",    radiusKm: 12 },
-  "mt-baldy":          { name: "Devil[’']?s Backbone|Mount San Antonio|Mt Baldy", radiusKm: 8 },
+  "mt-baldy":          { name: "Devil[’']?s Backbone|Ski Hut Trail|Mount San Antonio|Mt Baldy", radiusKm: 8 },
   "smugglers":         { name: "Smugglers Cove|Smugglers",              radiusKm: 8 },
 
   // Big Sur + Bay
@@ -90,6 +94,56 @@ const SEARCH_HINTS = {
   // Thru-hikes / misc
   "pct":               { name: "Pacific Crest Trail",                   radiusKm: 1500, byId: 1225378 },
   "mt-si":             { name: "Mount Si|Mt Si",                        radiusKm: 5 },
+
+  // ----- Batch 2 (Apr 2026): new West-Coast gap-fill trails -----
+  // Sequoia / Kings Canyon
+  "mist-falls":        { name: "Mist Falls|Paradise Valley",            radiusKm: 6 },
+  "lakes-trail":       { name: "Lakes Trail|Pear Lake|Watchtower",      radiusKm: 6 },
+  "moro-rock":         { name: "Moro Rock",                             radiusKm: 3 },
+  "tokopah-falls":     { name: "Tokopah Falls",                         radiusKm: 4 },
+
+  // Mt Hood
+  "tom-dick-harry":    { name: "Mirror Lake Trail|Tom[, ]+Dick",        radiusKm: 5 },
+  "mcneil-point":      { name: "McNeil Point|Top Spur",                 radiusKm: 6 },
+  "tamanawas-falls":   { name: "Tamanawas Falls",                       radiusKm: 4 },
+  "cooper-spur":       { name: "Cooper Spur|Tilly Jane",                radiusKm: 6 },
+
+  // Lassen
+  "cinder-cone":       { name: "Cinder Cone",                           radiusKm: 4 },
+
+  // Joshua Tree
+  "hidden-valley":     { name: "Hidden Valley Nature Trail|Hidden Valley Loop", radiusKm: 3 },
+  "lost-palms-oasis":  { name: "Lost Palms Oasis",                      radiusKm: 6 },
+  "forty-nine-palms":  { name: "49 Palms Oasis|Forty[- ]nine Palms",    radiusKm: 4 },
+
+  // North Cascades east
+  "kendall-katwalk":   { name: "Kendall Katwalk|Pacific Crest Trail",   radiusKm: 8 },
+  "cutthroat-pass":    { name: "Cutthroat Pass|Pacific Crest Trail",    radiusKm: 8 },
+
+  // Olympic
+  "marymere-falls":    { name: "Marymere Falls",                        radiusKm: 3 },
+
+  // Mt Baker / Cascades
+  "lake-22":           { name: "Lake (Twenty[- ]Two|22)",               radiusKm: 4 },
+  "chain-lakes":       { name: "Chain Lakes",                           radiusKm: 6 },
+
+  // SoCal coastal
+  "eaton-canyon":      { name: "Eaton Canyon",                          radiusKm: 4 },
+  "solstice-canyon":   { name: "Solstice Canyon|Rising Sun Trail",      radiusKm: 4 },
+
+  // Mt St Helens
+  "mt-st-helens":      { name: "Monitor Ridge|Mount St Helens",         radiusKm: 8 },
+
+  // Bay / Big Sur
+  "mission-peak":      { name: "Hidden Valley Trail|Peak Trail|Mission Peak", radiusKm: 5 },
+  "point-lobos":       { name: "North Shore Trail|South Shore Trail|Cypress Grove", radiusKm: 4 },
+  "pfeiffer-falls":    { name: "Pfeiffer Falls|Valley View Trail",      radiusKm: 4 },
+
+  // Crater Lake
+  "mt-scott-crater":   { name: "Mount Scott Trail|Mt Scott",            radiusKm: 5 },
+
+  // Columbia Gorge
+  "angels-rest":       { name: "Angel[’']?s Rest",                      radiusKm: 4 },
 };
 
 // Endpoints — try in order, retry next on failure
@@ -189,8 +243,10 @@ function totalCoords(geom) {
 // Load existing trails by parsing lib/trails.ts (simple regex extraction is enough)
 function loadTrails() {
   const txt = readFileSync(resolve(ROOT, "lib/trails.ts"), "utf8");
+  // Drop the trailing `\s*\}` so entries with an optional `name:` after lng
+  // (e.g. `trailhead: { lat: ..., lng: ..., name: "..." }`) still match.
   const matches = [...txt.matchAll(
-    /id:\s*"([^"]+)"[\s\S]*?trailhead:\s*\{\s*lat:\s*([-\d.]+),\s*lng:\s*([-\d.]+)\s*\}/g,
+    /id:\s*"([^"]+)"[\s\S]*?trailhead:\s*\{\s*lat:\s*([-\d.]+),\s*lng:\s*([-\d.]+)/g,
   )];
   return matches.map((m) => ({ id: m[1], lat: Number(m[2]), lng: Number(m[3]) }));
 }
