@@ -178,6 +178,23 @@ export const STRINGS = {
   // Seasonal advisories
   "advisory.heading":            { en: "Heads-up for {month}", zh: "{month} 提示" },
 
+  // User uploads
+  "upload.button":               { en: "Upload GPX",          zh: "上传 GPX" },
+  "upload.tooltip":              { en: "Upload a GPX file from Strava / Garmin / AllTrails to view your own track",
+                                    zh: "从 Strava / Garmin / AllTrails 等上传 GPX 文件，查看自己的轨迹" },
+  "upload.dropHint":             { en: "Drop a .gpx file anywhere on the page",
+                                    zh: "将 .gpx 文件拖到页面任意位置" },
+  "upload.parsing":              { en: "Parsing…",            zh: "解析中…" },
+  "upload.failed":               { en: "Upload failed: {err}", zh: "上传失败：{err}" },
+  "upload.maxReached":           { en: "Max {n} uploads — delete one to add another",
+                                    zh: "最多 {n} 条——删除一条才能再加" },
+  "upload.section":              { en: "My Uploads",          zh: "我上传的" },
+  "upload.delete":               { en: "Delete",              zh: "删除" },
+  "upload.confirmDelete":        { en: "Delete this upload?", zh: "确认删除？" },
+  "upload.tagCustom":            { en: "Custom",              zh: "自定义" },
+  "upload.uploadedOn":           { en: "Uploaded {date}",     zh: "{date} 上传" },
+  "upload.dropOverlay":          { en: "Drop to upload GPX",  zh: "释放上传 GPX" },
+
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
   "difficulty.moderate":        { en: "Moderate",  zh: "中等" },

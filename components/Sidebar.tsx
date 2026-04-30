@@ -1,8 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Search, Mountain, Filter, X, Heart, PanelLeftClose, PanelLeft } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Search,
+  Mountain,
+  Filter,
+  X,
+  Heart,
+  PanelLeftClose,
+  PanelLeft,
+  Upload,
+  Trash2,
+} from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
+import type { UserTrail } from "@/lib/uploads";
 import type { Difficulty, Popularity, Region, Trail, TrailType } from "@/lib/types";
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
@@ -11,8 +22,10 @@ import clsx from "clsx";
 
 interface SidebarProps {
   trails: Trail[];
+  userTrails: UserTrail[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDeleteUpload: (id: string) => void;
   onFilterChange: (filtered: Trail[]) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -20,8 +33,10 @@ interface SidebarProps {
 
 export default function Sidebar({
   trails,
+  userTrails,
   selectedId,
   onSelect,
+  onDeleteUpload,
   onFilterChange,
   collapsed,
   onToggleCollapsed,
@@ -98,6 +113,7 @@ export default function Sidebar({
             </div>
           </div>
           <LocaleToggle locale={locale} onChange={setLocale} />
+          <UploadFileButton />
           <button
             onClick={onToggleCollapsed}
             aria-label={t("sidebar.hide")}
@@ -230,6 +246,27 @@ export default function Sidebar({
 
       {/* Trail list */}
       <div className="flex-1 overflow-y-auto px-3 pb-5 pt-2">
+        {userTrails.length > 0 && (
+          <div className="mb-3">
+            <div className="mb-1.5 flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/85">
+              <Upload className="h-3 w-3" />
+              {t("upload.section")}
+              <span className="text-white/30">{userTrails.length}</span>
+            </div>
+            <ul className="space-y-1">
+              {userTrails.map((u) => (
+                <UploadCard
+                  key={u.id}
+                  trail={u}
+                  selected={u.id === selectedId}
+                  onClick={() => onSelect(u.id)}
+                  onDelete={() => onDeleteUpload(u.id)}
+                />
+              ))}
+            </ul>
+            <div className="mx-2 mt-3 border-t border-white/8" />
+          </div>
+        )}
         {filtered.length === 0 ? (
           <div className="px-5 py-8 text-center text-sm text-white/50">
             {t("sidebar.empty")}
@@ -405,6 +442,94 @@ function TrailCard({
           />
         </button>
       </div>
+    </li>
+  );
+}
+
+function UploadFileButton() {
+  const { t } = useLocale();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      window.dispatchEvent(new CustomEvent("trailspark:upload-file", { detail: file }));
+    }
+    if (inputRef.current) inputRef.current.value = "";
+  };
+  return (
+    <>
+      <button
+        onClick={() => inputRef.current?.click()}
+        title={t("upload.tooltip")}
+        aria-label={t("upload.button")}
+        className="rounded-md p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white"
+      >
+        <Upload className="h-4 w-4" />
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".gpx,application/gpx+xml,application/xml,text/xml"
+        onChange={handleFile}
+        className="hidden"
+      />
+    </>
+  );
+}
+
+function UploadCard({
+  trail,
+  selected,
+  onClick,
+  onDelete,
+}: {
+  trail: UserTrail;
+  selected: boolean;
+  onClick: () => void;
+  onDelete: () => void;
+}) {
+  const { t, fmtDistance, fmtElevation } = useLocale();
+  return (
+    <li
+      className={clsx(
+        "trail-card group relative rounded-lg",
+        selected
+          ? "bg-violet-500/25 ring-1 ring-violet-400/45 shadow-[0_4px_18px_rgba(139,92,246,0.18)]"
+          : "hover:bg-white/5",
+      )}
+    >
+      <button onClick={onClick} className="w-full px-3 py-2.5 text-left">
+        <div className="flex items-start gap-2.5 pr-7">
+          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-400" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium text-white">{trail.name}</div>
+            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-white/55">
+              <span>{trail.filename}</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2 text-[11px] text-white/65">
+              <span>{fmtDistance(trail.miles)}</span>
+              <span className="text-white/30">·</span>
+              <span>{t("sidebar.gain", { n: fmtElevation(trail.gainFt) })}</span>
+            </div>
+            <div className="mt-1.5">
+              <span className="inline-flex items-center rounded-full border border-violet-400/45 bg-violet-500/15 px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-wider text-violet-200">
+                {t("upload.tagCustom")}
+              </span>
+            </div>
+          </div>
+        </div>
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (window.confirm(t("upload.confirmDelete"))) onDelete();
+        }}
+        aria-label={t("upload.delete")}
+        title={t("upload.delete")}
+        className="absolute right-2 top-2 rounded-md p-1.5 text-white/45 opacity-60 transition-all hover:bg-red-500/15 hover:text-red-300 hover:opacity-100"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
     </li>
   );
 }

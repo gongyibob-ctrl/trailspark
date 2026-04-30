@@ -19,6 +19,7 @@ import { POI_HEX } from "@/lib/poi-icons";
 
 interface MapProps {
   trails: Trail[];
+  userTrails: import("@/lib/uploads").UserTrail[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   flyToId: string | null;
@@ -36,6 +37,9 @@ const LINE_LAYER_SELECTED = "trail-line-selected";
 const FIRE_SOURCE_ID = "wildfire";
 const FIRE_LAYER_FILL = "wildfire-fill";
 const FIRE_LAYER_LINE = "wildfire-line";
+const USER_LINE_SOURCE_ID = "user-trail-lines";
+const USER_LINE_LAYER = "user-trail-line";
+const USER_LINE_LAYER_SELECTED = "user-trail-line-selected";
 
 // Inline SVG glyphs used inside the pin. Hand-tuned for legibility at 9–12 px;
 // stroke comes from CSS, white needle fill is set inline.
@@ -140,7 +144,7 @@ const DIFFICULTY_COLOR_EXPR = [
   "#ffffff",
 ] as any;
 
-export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps) {
+export default function Map({ trails, userTrails, selectedId, onSelect, flyToId }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Record<string, Marker>>({});
@@ -361,6 +365,49 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
       // Wildfire perimeters (after lines so they sit above)
       addWildfireLayers();
 
+      // User-uploaded GPX trails — distinct dashed violet line so they don't
+      // visually compete with the curated 50.
+      if (!map.getSource(USER_LINE_SOURCE_ID)) {
+        map.addSource(USER_LINE_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: USER_LINE_LAYER,
+          type: "line",
+          source: USER_LINE_SOURCE_ID,
+          paint: {
+            "line-color": "#a78bfa",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.6, 10, 2.6, 14, 3.5],
+            "line-opacity": 0.85,
+            "line-dasharray": [2, 1.5],
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+        map.addLayer({
+          id: USER_LINE_LAYER_SELECTED,
+          type: "line",
+          source: USER_LINE_SOURCE_ID,
+          filter: ["==", ["get", "id"], "__none__"],
+          paint: {
+            "line-color": "#c4b5fd",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 5, 3, 10, 5, 14, 7],
+            "line-opacity": 0.95,
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+        map.on("click", USER_LINE_LAYER, (e) => {
+          const id = e.features?.[0]?.properties?.id as string | undefined;
+          if (id) onSelectRef.current(id);
+        });
+        map.on("mouseenter", USER_LINE_LAYER, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", USER_LINE_LAYER, () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
+
       // Cursor + click on lines
       map.on("click", LINE_LAYER_BASE, (e) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -420,6 +467,26 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
     if (map.isStyleLoaded()) apply();
     else map.once("load", apply);
   }, [linesGeoJSON]);
+
+  // User-trail line data — syncs whenever uploads add/remove
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const data: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: userTrails.map((u) => ({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: u.points },
+        properties: { id: u.id, name: u.name },
+      })),
+    };
+    const apply = () => {
+      const src = map.getSource(USER_LINE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+      if (src) src.setData(data);
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once("load", apply);
+  }, [userTrails]);
 
   // Markers for trailheads (reduced visual weight if a line exists)
   useEffect(() => {
@@ -494,6 +561,9 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
       if (map.getLayer(LINE_LAYER_SELECTED)) {
         map.setFilter(LINE_LAYER_SELECTED, ["==", ["get", "id"], selectedId ?? "__none__"]);
       }
+      if (map.getLayer(USER_LINE_LAYER_SELECTED)) {
+        map.setFilter(USER_LINE_LAYER_SELECTED, ["==", ["get", "id"], selectedId ?? "__none__"]);
+      }
     };
     if (map.isStyleLoaded()) updateFilter();
     else map.once("load", updateFilter);
@@ -554,6 +624,20 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
   // fly to selected trail — fit to bounds if we have a line, else point fly-to
   useEffect(() => {
     if (!flyToId || !mapRef.current) return;
+    // User-uploaded trail
+    if (flyToId.startsWith("user-")) {
+      const u = userTrails.find((x) => x.id === flyToId);
+      if (u) {
+        mapRef.current.fitBounds(u.bounds, {
+          padding: { top: 80, bottom: 80, left: 420, right: 500 },
+          pitch: 30,
+          duration: 1500,
+          maxZoom: 14,
+          essential: true,
+        });
+      }
+      return;
+    }
     const trail = trails.find((t) => t.id === flyToId);
     if (!trail) return;
     const bounds = getBounds(flyToId);
@@ -576,7 +660,7 @@ export default function Map({ trails, selectedId, onSelect, flyToId }: MapProps)
         essential: true,
       });
     }
-  }, [flyToId, trails]);
+  }, [flyToId, trails, userTrails]);
 
   return (
     <div className="absolute inset-0 bg-forest-950">

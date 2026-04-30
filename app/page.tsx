@@ -6,19 +6,20 @@ import clsx from "clsx";
 import { TRAILS, TRAIL_BY_ID } from "@/lib/trails";
 import Sidebar from "@/components/Sidebar";
 import TrailDetail from "@/components/TrailDetail";
+import UserTrailDetail from "@/components/UserTrailDetail";
 import Legend from "@/components/Legend";
+import GPXDropZone from "@/components/GPXDropZone";
 import type { Trail } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
+import { useUploads } from "@/lib/uploads";
 
-// Map needs to be client-only (uses window/canvas)
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 
 const QUERY_PARAM = "trail";
 
 function readTrailFromURL(): string | null {
   if (typeof window === "undefined") return null;
-  const id = new URL(window.location.href).searchParams.get(QUERY_PARAM);
-  return id && TRAIL_BY_ID[id] ? id : null;
+  return new URL(window.location.href).searchParams.get(QUERY_PARAM);
 }
 
 function writeTrailToURL(id: string | null) {
@@ -26,9 +27,10 @@ function writeTrailToURL(id: string | null) {
   const url = new URL(window.location.href);
   if (id) url.searchParams.set(QUERY_PARAM, id);
   else url.searchParams.delete(QUERY_PARAM);
-  // Use replaceState so we don't pollute the back-button history with every click
   window.history.replaceState({}, "", url);
 }
+
+const isUserTrailId = (id: string | null): boolean => !!id && id.startsWith("user-");
 
 export default function Page() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -36,19 +38,20 @@ export default function Page() {
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>(TRAILS);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { t } = useLocale();
+  const { uploads, remove: removeUpload } = useUploads();
 
-  // Hydrate selection from URL on mount
   useEffect(() => {
     const fromUrl = readTrailFromURL();
-    if (fromUrl) {
+    // Only restore if it's a known curated id; user trails are session-tied
+    if (fromUrl && TRAIL_BY_ID[fromUrl]) {
       setSelectedId(fromUrl);
       setFlyToId(fromUrl);
     }
-    // Listen for back/forward
     const onPop = () => {
       const id = readTrailFromURL();
-      setSelectedId(id);
-      if (id) setFlyToId(id);
+      const valid = id && TRAIL_BY_ID[id] ? id : null;
+      setSelectedId(valid);
+      if (valid) setFlyToId(valid);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -57,7 +60,9 @@ export default function Page() {
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
     setFlyToId(id);
-    writeTrailToURL(id);
+    // Only persist curated-trail selection in the URL — user uploads are
+    // local-only, so a shareable link makes no sense for them.
+    writeTrailToURL(isUserTrailId(id) ? null : id);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -67,12 +72,26 @@ export default function Page() {
 
   const handleFilterChange = useCallback((next: Trail[]) => setFilteredTrails(next), []);
 
-  const selectedTrail = selectedId ? TRAIL_BY_ID[selectedId] ?? null : null;
+  const handleDeleteUpload = useCallback(
+    (id: string) => {
+      removeUpload(id);
+      if (selectedId === id) setSelectedId(null);
+    },
+    [removeUpload, selectedId],
+  );
+
+  const selectedTrail =
+    selectedId && !isUserTrailId(selectedId) ? TRAIL_BY_ID[selectedId] ?? null : null;
+  const selectedUserTrail =
+    selectedId && isUserTrailId(selectedId)
+      ? uploads.find((u) => u.id === selectedId) ?? null
+      : null;
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-forest-950">
       <Map
         trails={filteredTrails}
+        userTrails={uploads}
         selectedId={selectedId}
         onSelect={handleSelect}
         flyToId={flyToId}
@@ -80,18 +99,28 @@ export default function Page() {
 
       <Sidebar
         trails={TRAILS}
+        userTrails={uploads}
         selectedId={selectedId}
         onSelect={handleSelect}
+        onDeleteUpload={handleDeleteUpload}
         onFilterChange={handleFilterChange}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
 
       <TrailDetail trail={selectedTrail} onClose={handleClose} />
+      {selectedUserTrail && (
+        <UserTrailDetail
+          trail={selectedUserTrail}
+          onClose={handleClose}
+          onDelete={() => handleDeleteUpload(selectedUserTrail.id)}
+        />
+      )}
 
       <Legend />
 
-      {/* Bottom-left brand strip — slides with the sidebar */}
+      <GPXDropZone onUploaded={(id) => handleSelect(id)} />
+
       <div
         className={clsx(
           "pointer-events-none absolute bottom-3 z-10 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/35 transition-[left] duration-300 ease-out",
