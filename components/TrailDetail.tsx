@@ -17,11 +17,14 @@ import {
   Link2,
   Check,
   Flame,
+  ClipboardCopy,
 } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR } from "@/lib/types";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
+import { getTrailPOIs, type POI } from "@/lib/trail-pois";
+import { POI_ICON, POI_TONE } from "@/lib/poi-icons";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import {
   fetchTrailArchive,
@@ -36,6 +39,7 @@ import {
 } from "@/lib/weather";
 import { fetchActiveFires, nearbyFires, type NearbyFire } from "@/lib/wildfire";
 import { getPermitInfo } from "@/lib/permits";
+import { formatTrailForCopy } from "@/lib/copy";
 import {
   bestMonths as computeBestMonths,
   initialDateForBestSeasons,
@@ -133,10 +137,12 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
     () => (trail ? computeBestMonths(trail.bestSeasons) : new Set<number>()),
     [trail],
   );
-  const gear = useMemo(() => {
-    if (!trail) return null;
-    return groupByCategory(recommendGear(trail, season));
-  }, [trail, season]);
+  const gearItems = useMemo(
+    () => (trail ? recommendGear(trail, season) : []),
+    [trail, season],
+  );
+  const gear = useMemo(() => groupByCategory(gearItems), [gearItems]);
+  const essentialGear = useMemo(() => gearItems.filter((g) => g.essential), [gearItems]);
 
   if (!trail) return null;
 
@@ -154,6 +160,13 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
       {/* Header */}
       <div className="relative px-5 pb-4 pt-5">
         <div className="absolute right-3 top-3 flex items-center gap-1">
+          <CopyOfflineButton
+            trail={trail}
+            date={date}
+            dateNormal={dateNormal}
+            essentialGear={essentialGear}
+            fireWarnings={fireWarnings}
+          />
           <ShareButton trailId={trail.id} />
           <button
             onClick={() => toggleFavorite(trail.id)}
@@ -233,8 +246,15 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           <ElevationProfile trailId={trail.id} />
         </Section>
 
+        {/* Along the way — POIs ordered by distance from trailhead */}
+        {getTrailPOIs(trail.id).length > 0 && (
+          <Section title={t("section.alongWay")} accent="forest" delay={3}>
+            <AlongTheWay pois={getTrailPOIs(trail.id)} />
+          </Section>
+        )}
+
         {/* Highlights */}
-        <Section title={t("section.highlights")} accent="ember" delay={3}>
+        <Section title={t("section.highlights")} accent="ember" delay={3.5}>
           <ul className="space-y-1.5">
             {trailHighlights.map((h, i) => (
               <li
@@ -821,6 +841,52 @@ const DEMAND_TONE: Record<string, string> = {
   lottery: "text-red-200 bg-red-500/15 ring-red-400/30",
 };
 
+function AlongTheWay({ pois }: { pois: POI[] }) {
+  const { locale, t, fmtDistance, fmtElevation } = useLocale();
+  return (
+    <ul className="space-y-1.5">
+      {pois.map((p, i) => {
+        const Icon = POI_ICON[p.type];
+        const tone = POI_TONE[p.type];
+        const name = locale === "zh" && p.nameZh ? p.nameZh : p.name;
+        const distance = p.m == null
+          ? null
+          : p.m === 0
+            ? t("poi.atTrailhead")
+            : t("poi.miMark", { m: locale === "zh" ? (p.m * 1.60934).toFixed(1) : p.m });
+        return (
+          <li
+            key={i}
+            className="flex items-start gap-2.5 rounded-md px-1 py-0.5 text-[12.5px] transition-colors hover:bg-white/5"
+          >
+            <span
+              className={clsx(
+                "mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1",
+                tone,
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2 text-white/85">
+                <span className="truncate">{name}</span>
+                {p.ft != null && (
+                  <span className="shrink-0 font-mono text-[10.5px] text-white/45">
+                    {fmtElevation(p.ft)}
+                  </span>
+                )}
+              </div>
+              {distance && (
+                <div className="text-[10.5px] text-white/45">{distance}</div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function PermitInfoCard({ trailId }: { trailId: string }) {
   const { t, locale } = useLocale();
   const info = getPermitInfo(trailId);
@@ -949,6 +1015,64 @@ function FireWarning({ fires }: { fires: NearbyFire[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function CopyOfflineButton({
+  trail,
+  date,
+  dateNormal,
+  essentialGear,
+  fireWarnings,
+}: {
+  trail: Trail;
+  date: PickedDate;
+  dateNormal: ReturnType<typeof normalForDate> | null;
+  essentialGear: ReturnType<typeof recommendGear>;
+  fireWarnings: NearbyFire[];
+}) {
+  const { t, locale } = useLocale();
+  const [copied, setCopied] = useState(false);
+
+  const handleClick = async () => {
+    const url = typeof window !== "undefined"
+      ? (() => {
+          const u = new URL(window.location.href);
+          u.searchParams.set("trail", trail.id);
+          return u.toString();
+        })()
+      : `https://trailspark.app/?trail=${trail.id}`;
+    const text = formatTrailForCopy({
+      trail,
+      locale,
+      date,
+      dateNormal,
+      essentialGear,
+      fireWarnings,
+      shareUrl: url,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      window.prompt("Copy this:", text);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      aria-label={copied ? t("offline.copied") : t("offline.copy")}
+      title={t("offline.tooltip")}
+      className="rounded-full p-1.5 text-white/55 transition hover:scale-110 hover:bg-white/10 hover:text-white"
+    >
+      {copied ? (
+        <Check className="h-4 w-4 text-forest-300" />
+      ) : (
+        <ClipboardCopy className="h-4 w-4" />
+      )}
+    </button>
   );
 }
 

@@ -131,6 +131,23 @@ export const STRINGS = {
   "permit.dataSource":           { en: "Live from Recreation.gov", zh: "来自 Recreation.gov" },
   "permit.lastUpdated":          { en: "Updated {date}", zh: "更新于 {date}" },
 
+  // POI / Along the way
+  "section.alongWay":           { en: "Along the way",       zh: "沿途风景" },
+  "poi.miMark":                 { en: "Mile {m}",            zh: "{m} 公里处" },
+  "poi.atTrailhead":            { en: "Trailhead",           zh: "起点" },
+
+  // Copy for offline
+  "offline.copy":               { en: "Copy for offline",    zh: "复制到备忘录" },
+  "offline.copied":             { en: "Copied!",             zh: "已复制" },
+  "offline.tooltip":            { en: "Copy plain-text summary (no signal needed in the wild)",
+                                   zh: "复制纯文本摘要（户外无信号也能用）" },
+  "offline.weatherSection":     { en: "Weather around {date}", zh: "{date} 天气" },
+  "offline.gearSection":        { en: "Essential gear",      zh: "必备装备" },
+  "offline.permitSection":      { en: "Permit",              zh: "许可" },
+  "offline.poisSection":        { en: "Along the way",       zh: "沿途风景" },
+  "offline.fireSection":        { en: "Active wildfires nearby", zh: "附近活跃野火" },
+  "offline.source":             { en: "Source: Trailspark · {url}", zh: "来源：Trailspark · {url}" },
+
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
   "difficulty.moderate":        { en: "Moderate",  zh: "中等" },
