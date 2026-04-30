@@ -805,9 +805,40 @@ function WeatherSkeleton() {
   );
 }
 
+interface RidbDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  importantInfo: string | null;
+  parking: string | null;
+  directions: string | null;
+  url: string | null;
+  lastUpdated: string | null;
+}
+
 function PermitInfoCard({ trailId }: { trailId: string }) {
   const { t, locale } = useLocale();
   const info = getPermitInfo(trailId);
+  const [details, setDetails] = useState<RidbDetails | null>(null);
+  const [showFull, setShowFull] = useState(false);
+
+  // Fetch RIDB enriched data on mount (English only — RIDB is American gov data)
+  useEffect(() => {
+    setDetails(null);
+    setShowFull(false);
+    if (!info?.ridbId) return;
+    let cancelled = false;
+    fetch(`/api/permit/${info.ridbId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d && !d.error) setDetails(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [info?.ridbId]);
+
   if (!info) return null;
   const demandKey = `permit.demand.${info.demand}` as StringKey;
   const demandTone = {
@@ -816,6 +847,14 @@ function PermitInfoCard({ trailId }: { trailId: string }) {
     high: "text-orange-200 bg-orange-500/15 ring-orange-400/30",
     lottery: "text-red-200 bg-red-500/15 ring-red-400/30",
   }[info.demand];
+
+  // Truncate official notes for collapsed state. RIDB notes only available in English.
+  const officialNotes = locale === "en" ? details?.importantInfo : null;
+  const COLLAPSED_LEN = 240;
+  const needsTruncate = officialNotes && officialNotes.length > COLLAPSED_LEN;
+  const displayedNotes = needsTruncate && !showFull
+    ? officialNotes!.slice(0, COLLAPSED_LEN).replace(/\s+\S*$/, "") + "…"
+    : officialNotes;
 
   return (
     <Section title={t("permit.heading")} accent="ember" delay={1.5}>
@@ -841,6 +880,31 @@ function PermitInfoCard({ trailId }: { trailId: string }) {
           {t("permit.applyButton")}
           <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </a>
+
+        {officialNotes && (
+          <div className="mt-3 rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
+            <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-white/45">
+              <span>{t("permit.officialNotes")}</span>
+              {details?.lastUpdated && (
+                <span className="text-white/35">
+                  {t("permit.lastUpdated", { date: details.lastUpdated })}
+                </span>
+              )}
+            </div>
+            <p className="whitespace-pre-line text-[12px] leading-relaxed text-white/75">
+              {displayedNotes}
+            </p>
+            {needsTruncate && (
+              <button
+                onClick={() => setShowFull((v) => !v)}
+                className="mt-1.5 text-[11px] text-ember-300/85 hover:text-ember-200"
+              >
+                {showFull ? t("permit.showLess") : t("permit.showMore")}
+              </button>
+            )}
+            <div className="mt-2 text-[10px] text-white/30">{t("permit.dataSource")}</div>
+          </div>
+        )}
       </div>
     </Section>
   );

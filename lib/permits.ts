@@ -15,6 +15,8 @@ export interface PermitInfo {
   /** Official application URL (deep link to the permit page). */
   url: string;
   demand: PermitDemand;
+  /** Optional RIDB facility/permitentrance ID for fetching live details */
+  ridbId?: string;
 }
 
 export const PERMITS: Record<string, PermitInfo> = {
@@ -26,6 +28,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/234652",
     demand: "lottery",
+    ridbId: "234652",
   },
   "mt-whitney": {
     authority: { en: "Inyo National Forest", zh: "因约国家森林" },
@@ -35,6 +38,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/233260",
     demand: "lottery",
+    ridbId: "233260",
   },
   jmt: {
     authority: { en: "Yosemite NPS (for north-bound starts)", zh: "优胜美地（北端起步）" },
@@ -44,6 +48,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/445857",
     demand: "lottery",
+    ridbId: "445857",
   },
   "rae-lakes": {
     authority: { en: "Sequoia & Kings Canyon NP", zh: "红杉 & 国王峡谷国家公园" },
@@ -53,6 +58,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/445856",
     demand: "high",
+    ridbId: "445856",
   },
   wonderland: {
     authority: { en: "Mt Rainier National Park", zh: "雷尼尔山国家公园" },
@@ -62,6 +68,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/4675321",
     demand: "lottery",
+    ridbId: "4675321",
   },
   "shi-shi": {
     authority: { en: "Olympic National Park (coastal)", zh: "奥林匹克国家公园（海岸区）" },
@@ -71,6 +78,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/4098362",
     demand: "moderate",
+    ridbId: "4098362",
   },
   "high-divide": {
     authority: { en: "Olympic National Park (Sol Duc)", zh: "奥林匹克国家公园（Sol Duc）" },
@@ -80,6 +88,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/4098362",
     demand: "high",
+    ridbId: "4098362",
   },
   "cascade-pass": {
     authority: { en: "North Cascades NP", zh: "北喀斯喀特国家公园" },
@@ -89,6 +98,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/4675317",
     demand: "moderate",
+    ridbId: "4675317",
   },
   "south-sister": {
     authority: { en: "Three Sisters Wilderness", zh: "三姐妹荒野" },
@@ -98,6 +108,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/233273",
     demand: "high",
+    ridbId: "233273",
   },
   "fern-canyon": {
     authority: { en: "Prairie Creek Redwoods SP", zh: "Prairie Creek 红杉州立公园" },
@@ -116,6 +127,7 @@ export const PERMITS: Record<string, PermitInfo> = {
     },
     url: "https://www.recreation.gov/permits/233272",
     demand: "high",
+    ridbId: "233272",
   },
   pct: {
     authority: { en: "PCTA Long-Distance Permit", zh: "PCTA 长距离许可" },

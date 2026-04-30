@@ -125,6 +125,11 @@ export const STRINGS = {
   "permit.demand.moderate":     { en: "Moderate — book early", zh: "中等 · 建议早申请" },
   "permit.demand.high":         { en: "High — competitive", zh: "高 · 竞争激烈" },
   "permit.demand.lottery":      { en: "Very high — lottery only", zh: "极高 · 仅抽签" },
+  "permit.officialNotes":       { en: "Official park notes", zh: "官方提示" },
+  "permit.showMore":             { en: "Show full notes", zh: "查看完整内容" },
+  "permit.showLess":             { en: "Show less", zh: "收起" },
+  "permit.dataSource":           { en: "Live from Recreation.gov", zh: "来自 Recreation.gov" },
+  "permit.lastUpdated":          { en: "Updated {date}", zh: "更新于 {date}" },
 
   // Difficulty
   "difficulty.easy":            { en: "Easy",      zh: "简单" },
