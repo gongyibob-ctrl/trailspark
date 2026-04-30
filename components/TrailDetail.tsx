@@ -562,10 +562,10 @@ function ClimateChart({
   const selX = xAt(highlightMonth - 1);
 
   return (
-    <div className="mt-3 rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
-      <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-wider text-white/40">
-        <span>Year-round avg high / low °F</span>
-        <span>
+    <div className="mt-3 overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
+      <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
+        <span className="truncate">Year-round avg high / low °F</span>
+        <span className="shrink-0 whitespace-nowrap">
           {rawMin}° – {rawMax}°
         </span>
       </div>
@@ -576,7 +576,6 @@ function ClimateChart({
           width="100%"
           height="110"
           preserveAspectRatio="none"
-          className="overflow-visible"
         >
           <defs>
             <linearGradient id="tempBand" x1="0" y1="0" x2="0" y2="1">
@@ -594,7 +593,7 @@ function ClimateChart({
             </linearGradient>
           </defs>
 
-          {/* y-axis dotted gridlines */}
+          {/* y-axis dotted gridlines (label sits inside the chart, right-aligned) */}
           {ticks.map((t) => (
             <g key={t}>
               <line
@@ -606,10 +605,11 @@ function ClimateChart({
                 strokeDasharray="2 4"
               />
               <text
-                x={W - PADX + 2}
-                y={yAt(t) + 3}
+                x={W - PADX - 2}
+                y={yAt(t) - 2}
                 fontSize="9"
-                fill="rgba(255,255,255,0.35)"
+                fill="rgba(255,255,255,0.4)"
+                textAnchor="end"
               >
                 {t}°
               </text>
@@ -655,29 +655,36 @@ function ClimateChart({
             strokeLinejoin="round"
           />
 
-          {/* selected-month dots + labels */}
-          <circle cx={selX} cy={yAt(sel.tempMaxF)} r="3.5" fill="#ee7e3e" stroke="#fff" strokeWidth="1.2" />
-          <circle cx={selX} cy={yAt(sel.tempMinF)} r="3.5" fill="#3b82f6" stroke="#fff" strokeWidth="1.2" />
-          <text
-            x={selX}
-            y={yAt(sel.tempMaxF) - 6}
-            fontSize="10"
-            fontWeight="600"
-            fill="#ffd6b8"
-            textAnchor="middle"
-          >
-            {sel.tempMaxF}°
-          </text>
-          <text
-            x={selX}
-            y={yAt(sel.tempMinF) + 13}
-            fontSize="10"
-            fontWeight="600"
-            fill="#bdd6ff"
-            textAnchor="middle"
-          >
-            {sel.tempMinF}°
-          </text>
+          {/* selected-month dots + labels (clamped so they never bleed off the chart) */}
+          {(() => {
+            const labelX = Math.min(Math.max(selX, PADX + 14), W - PADX - 14);
+            return (
+              <>
+                <circle cx={selX} cy={yAt(sel.tempMaxF)} r="3.5" fill="#ee7e3e" stroke="#fff" strokeWidth="1.2" />
+                <circle cx={selX} cy={yAt(sel.tempMinF)} r="3.5" fill="#3b82f6" stroke="#fff" strokeWidth="1.2" />
+                <text
+                  x={labelX}
+                  y={Math.max(yAt(sel.tempMaxF) - 6, 11)}
+                  fontSize="10"
+                  fontWeight="600"
+                  fill="#ffd6b8"
+                  textAnchor="middle"
+                >
+                  {sel.tempMaxF}°
+                </text>
+                <text
+                  x={labelX}
+                  y={Math.min(yAt(sel.tempMinF) + 13, H - 2)}
+                  fontSize="10"
+                  fontWeight="600"
+                  fill="#bdd6ff"
+                  textAnchor="middle"
+                >
+                  {sel.tempMinF}°
+                </text>
+              </>
+            );
+          })()}
         </svg>
 
         {/* x-axis month labels */}

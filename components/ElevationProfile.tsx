@@ -99,13 +99,13 @@ function Chart({ profile }: { profile: Profile }) {
   ];
 
   return (
-    <div className="rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
-      <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-wider text-white/40">
-        <span className="flex items-center gap-1.5">
-          <TrendingUp className="h-3 w-3" />
+    <div className="overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
+      <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
+        <span className="flex items-center gap-1.5 truncate">
+          <TrendingUp className="h-3 w-3 shrink-0" />
           Elevation profile
         </span>
-        <span>
+        <span className="shrink-0 whitespace-nowrap">
           <span className="text-ember-400">+{profile.totalGainFt.toLocaleString()}′</span>{" "}
           <span className="text-white/35">cumulative</span>
         </span>
@@ -117,7 +117,6 @@ function Chart({ profile }: { profile: Profile }) {
           width="100%"
           height="110"
           preserveAspectRatio="none"
-          className="overflow-visible"
         >
           <defs>
             <linearGradient id="elevFill" x1="0" y1="0" x2="0" y2="1">
@@ -131,7 +130,7 @@ function Chart({ profile }: { profile: Profile }) {
             </linearGradient>
           </defs>
 
-          {/* y-axis dotted gridlines */}
+          {/* y-axis dotted gridlines (label sits inside the chart, right-aligned) */}
           {ticks.map((t) => (
             <g key={t}>
               <line
@@ -143,10 +142,11 @@ function Chart({ profile }: { profile: Profile }) {
                 strokeDasharray="2 4"
               />
               <text
-                x={W - PADX + 2}
-                y={yAt(t) + 3}
+                x={W - PADX - 2}
+                y={yAt(t) - 2}
                 fontSize="9"
-                fill="rgba(255,255,255,0.35)"
+                fill="rgba(255,255,255,0.4)"
+                textAnchor="end"
               >
                 {t.toLocaleString()}′
               </text>
@@ -167,11 +167,11 @@ function Chart({ profile }: { profile: Profile }) {
 
           {/* start dot */}
           <circle cx={xAt(start.miles)} cy={yAt(start.feet)} r="3" fill="#7fb6ff" stroke="#fff" strokeWidth="1" />
-          {/* high point dot + label */}
+          {/* high point dot + label (clamp text away from chart edges) */}
           <circle cx={xAt(high.miles)} cy={yAt(high.feet)} r="3.5" fill="#ee7e3e" stroke="#fff" strokeWidth="1.2" />
           <text
-            x={xAt(high.miles)}
-            y={yAt(high.feet) - 7}
+            x={Math.min(Math.max(xAt(high.miles), PADX + 36), W - PADX - 36)}
+            y={Math.max(yAt(high.feet) - 7, 12)}
             fontSize="10"
             fontWeight="600"
             fill="#ffd6b8"
