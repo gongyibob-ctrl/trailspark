@@ -8,6 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import TrailDetail from "@/components/TrailDetail";
 import Legend from "@/components/Legend";
 import type { Trail } from "@/lib/types";
+import { useLocale } from "@/lib/i18n";
 
 // Map needs to be client-only (uses window/canvas)
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
@@ -34,6 +35,7 @@ export default function Page() {
   const [flyToId, setFlyToId] = useState<string | null>(null);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>(TRAILS);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { t } = useLocale();
 
   // Hydrate selection from URL on mount
   useEffect(() => {
@@ -97,7 +99,7 @@ export default function Page() {
         )}
       >
         <span className="h-px w-6 bg-white/20" />
-        <span>Trailspark · West Coast MVP</span>
+        <span>{t("brand.footer")}</span>
       </div>
     </main>
   );

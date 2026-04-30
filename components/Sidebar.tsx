@@ -4,12 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, Mountain, Filter, X, Heart, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import type { Difficulty, Region, Trail, TrailType } from "@/lib/types";
-import {
-  DIFFICULTY_COLOR,
-  DIFFICULTY_LABEL,
-  REGION_LABEL,
-  TYPE_LABEL,
-} from "@/lib/types";
+import { DIFFICULTY_COLOR } from "@/lib/types";
+import { useLocale, type StringKey } from "@/lib/i18n";
+import { TRAILS_ZH } from "@/lib/trails-zh";
 import clsx from "clsx";
 
 interface SidebarProps {
@@ -36,15 +33,20 @@ export default function Sidebar({
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { favorites, toggle: toggleFavorite } = useFavorites();
+  const { locale, setLocale, t } = useLocale();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return trails.filter((t) => {
-      if (favoritesOnly && !favorites.has(t.id)) return false;
-      if (q && !t.name.toLowerCase().includes(q) && !t.parkUnit.toLowerCase().includes(q)) return false;
-      if (regions.size && !regions.has(t.region)) return false;
-      if (difficulties.size && !difficulties.has(t.difficulty)) return false;
-      if (types.size && !types.has(t.type)) return false;
+    return trails.filter((tr) => {
+      if (favoritesOnly && !favorites.has(tr.id)) return false;
+      if (q) {
+        const zh = TRAILS_ZH[tr.id];
+        const haystack = `${tr.name} ${tr.parkUnit} ${zh?.parkUnit ?? ""}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      if (regions.size && !regions.has(tr.region)) return false;
+      if (difficulties.size && !difficulties.has(tr.difficulty)) return false;
+      if (types.size && !types.has(tr.type)) return false;
       return true;
     });
   }, [trails, query, regions, difficulties, types, favoritesOnly, favorites]);
@@ -86,16 +88,17 @@ export default function Sidebar({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-forest-500/30 ring-1 ring-forest-400/30">
             <Mountain className="h-5 w-5 text-forest-200" />
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div className="text-base font-semibold tracking-tight text-white">Trailspark</div>
             <div className="text-[11px] uppercase tracking-[0.14em] text-forest-200/70">
-              US West Coast · {trails.length} trails
+              {t("brand.tagline")} · {t("brand.trailsCount", { n: trails.length })}
             </div>
           </div>
+          <LocaleToggle locale={locale} onChange={setLocale} />
           <button
             onClick={onToggleCollapsed}
-            aria-label="Hide trail list"
-            title="Hide trail list"
+            aria-label={t("sidebar.hide")}
+            title={t("sidebar.hide")}
             className="rounded-md p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white"
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -109,7 +112,7 @@ export default function Sidebar({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search trails or parks..."
+            placeholder={t("sidebar.search")}
             className="w-full rounded-lg bg-black/30 py-2 pl-9 pr-9 text-sm text-white placeholder-white/40 outline-none ring-1 ring-white/10 focus:ring-forest-400/60"
           />
           {query && (
@@ -136,7 +139,7 @@ export default function Sidebar({
             )}
           >
             <Filter className="h-3.5 w-3.5" />
-            Filters
+            {t("sidebar.filters")}
             {activeFilterCount > 0 && (
               <span className="rounded-full bg-ember-500 px-1.5 py-px text-[10px] font-semibold text-white">
                 {activeFilterCount}
@@ -154,10 +157,10 @@ export default function Sidebar({
             )}
             title={
               favorites.size === 0
-                ? "Tap the heart on any trail to save"
+                ? t("sidebar.favoritesTooltip.empty")
                 : favoritesOnly
-                  ? "Showing favorites only"
-                  : `Show favorites (${favorites.size})`
+                  ? t("sidebar.favoritesTooltip.on")
+                  : t("sidebar.favoritesTooltip.off", { n: favorites.size })
             }
           >
             <Heart
@@ -167,33 +170,36 @@ export default function Sidebar({
             <span className="text-[11px]">{favorites.size}</span>
           </button>
         </div>
-        <span className="text-xs text-white/50">{filtered.length} results</span>
+        <span className="text-xs text-white/50">{t("sidebar.results", { n: filtered.length })}</span>
       </div>
 
       {/* Filter panel */}
       {filtersOpen && (
         <div className="animate-fade-in space-y-3 border-y border-white/10 bg-black/20 px-5 py-3">
           <FilterGroup
-            label="Region"
-            options={Object.entries(REGION_LABEL).map(([v, l]) => ({ value: v as Region, label: l }))}
+            label={t("sidebar.region")}
+            options={(["yosemite-sierra","rainier","olympic","north-cascades","oregon","norcal","socal-desert","bigsur-bay","thru-hike"] as Region[]).map((v) => ({
+              value: v,
+              label: t(`region.${v}` as StringKey),
+            }))}
             active={regions}
             onToggle={(v) => toggle(regions, v, setRegions)}
           />
           <FilterGroup
-            label="Difficulty"
-            options={(Object.keys(DIFFICULTY_LABEL) as Difficulty[]).map((d) => ({
+            label={t("sidebar.difficulty")}
+            options={(["easy","moderate","hard","extreme"] as Difficulty[]).map((d) => ({
               value: d,
-              label: DIFFICULTY_LABEL[d],
+              label: t(`difficulty.${d}` as StringKey),
               color: DIFFICULTY_COLOR[d],
             }))}
             active={difficulties}
             onToggle={(v) => toggle(difficulties, v, setDifficulties)}
           />
           <FilterGroup
-            label="Type"
-            options={(Object.keys(TYPE_LABEL) as TrailType[]).map((t) => ({
-              value: t,
-              label: TYPE_LABEL[t],
+            label={t("sidebar.type")}
+            options={(["day","multi-day","thru-hike"] as TrailType[]).map((tp) => ({
+              value: tp,
+              label: t(`type.${tp}` as StringKey),
             }))}
             active={types}
             onToggle={(v) => toggle(types, v, setTypes)}
@@ -203,7 +209,7 @@ export default function Sidebar({
               onClick={clearFilters}
               className="w-full rounded-md bg-white/5 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white"
             >
-              Clear all filters
+              {t("sidebar.clearFilters")}
             </button>
           )}
         </div>
@@ -213,7 +219,7 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto px-3 pb-5 pt-2">
         {filtered.length === 0 ? (
           <div className="px-5 py-8 text-center text-sm text-white/50">
-            No trails match your filters.
+            {t("sidebar.empty")}
           </div>
         ) : (
           <ul className="space-y-1.5">
@@ -236,8 +242,8 @@ export default function Sidebar({
       {/* Floating expand button — only visible when collapsed */}
       <button
         onClick={onToggleCollapsed}
-        aria-label="Show trail list"
-        title="Show trail list"
+        aria-label={t("sidebar.show")}
+        title={t("sidebar.show")}
         className={clsx(
           "absolute left-3 top-3 z-20 flex items-center gap-1.5 rounded-lg px-2.5 py-2 glass ring-1 ring-white/10 text-white/80 transition-all duration-300",
           "hover:bg-white/8 hover:text-white",
@@ -247,7 +253,7 @@ export default function Sidebar({
         )}
       >
         <PanelLeft className="h-4 w-4" />
-        <span className="text-[11px] font-medium uppercase tracking-wider">Trails</span>
+        <span className="text-[11px] font-medium uppercase tracking-wider">{t("sidebar.trails")}</span>
       </button>
     </>
   );
@@ -313,6 +319,9 @@ function TrailCard({
   onToggleFavorite: () => void;
   index: number;
 }) {
+  const { locale, t, fmtDistance, fmtElevation } = useLocale();
+  const zh = TRAILS_ZH[trail.id];
+  const parkUnitLabel = locale === "zh" && zh?.parkUnit ? zh.parkUnit : trail.parkUnit;
   return (
     <li
       className="animate-rise"
@@ -335,16 +344,16 @@ function TrailCard({
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium text-white">{trail.name}</div>
               <div className="mt-0.5 truncate text-[11px] text-white/55">
-                {trail.parkUnit}
+                {parkUnitLabel}
               </div>
               <div className="mt-1 flex items-center gap-2 text-[11px] text-white/65">
-                <span>{trail.lengthMiles} mi</span>
+                <span>{fmtDistance(trail.lengthMiles)}</span>
                 <span className="text-white/30">·</span>
-                <span>{trail.elevationGainFt.toLocaleString()} ft gain</span>
+                <span>{t("sidebar.gain", { n: fmtElevation(trail.elevationGainFt) })}</span>
                 {trail.permitRequired && (
                   <>
                     <span className="text-white/30">·</span>
-                    <span className="text-ember-400">Permit</span>
+                    <span className="text-ember-400">{t("sidebar.permit")}</span>
                   </>
                 )}
               </div>
@@ -356,7 +365,7 @@ function TrailCard({
             e.stopPropagation();
             onToggleFavorite();
           }}
-          aria-label={favorite ? "Remove from favorites" : "Save to favorites"}
+          aria-label={favorite ? t("detail.aria.favoriteRemove") : t("detail.aria.favoriteSave")}
           className={clsx(
             "absolute right-2 top-2 rounded-md p-1.5 opacity-60 transition-all",
             "hover:scale-110 hover:bg-white/10 hover:opacity-100",
@@ -373,5 +382,25 @@ function TrailCard({
         </button>
       </div>
     </li>
+  );
+}
+
+function LocaleToggle({ locale, onChange }: { locale: "en" | "zh"; onChange: (l: "en" | "zh") => void }) {
+  return (
+    <div className="flex shrink-0 items-center rounded-md bg-white/5 p-0.5 ring-1 ring-white/10">
+      {(["en", "zh"] as const).map((l) => (
+        <button
+          key={l}
+          onClick={() => onChange(l)}
+          className={clsx(
+            "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition",
+            locale === l ? "bg-forest-500/40 text-white" : "text-white/55 hover:text-white",
+          )}
+          aria-label={l === "en" ? "English" : "中文"}
+        >
+          {l === "en" ? "EN" : "中"}
+        </button>
+      ))}
+    </div>
   );
 }

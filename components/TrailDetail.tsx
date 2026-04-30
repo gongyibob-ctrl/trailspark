@@ -19,12 +19,9 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
-import {
-  DIFFICULTY_COLOR,
-  DIFFICULTY_LABEL,
-  ECOSYSTEM_LABEL,
-  TYPE_LABEL,
-} from "@/lib/types";
+import { DIFFICULTY_COLOR } from "@/lib/types";
+import { useLocale, type StringKey } from "@/lib/i18n";
+import { TRAILS_ZH } from "@/lib/trails-zh";
 import {
   fetchTrailArchive,
   fetchForecast,
@@ -38,10 +35,8 @@ import {
 } from "@/lib/weather";
 import {
   bestMonths as computeBestMonths,
-  formatPickedShort,
   initialDateForBestSeasons,
   seasonForDate,
-  MONTH_NAMES_SHORT,
   type PickedDate,
 } from "@/lib/dates";
 import DatePicker from "./DatePicker";
@@ -57,6 +52,7 @@ interface TrailDetailProps {
 
 export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   const { favorites, toggle: toggleFavorite } = useFavorites();
+  const { locale, t, fmtDistance, fmtElevation, fmtTemp, fmtPrecip, fmtWind, tempValue } = useLocale();
   const [date, setDate] = useState<PickedDate>(() =>
     trail ? initialDateForBestSeasons(trail.bestSeasons) : { month: 7, day: 15 },
   );
@@ -125,6 +121,12 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   if (!trail) return null;
 
   const diffColor = DIFFICULTY_COLOR[trail.difficulty];
+  const zh = TRAILS_ZH[trail.id];
+  const trailDescription = locale === "zh" && zh?.description ? zh.description : trail.description;
+  const trailHighlights = locale === "zh" && zh?.highlights ? zh.highlights : trail.highlights;
+  const trailParkUnit = locale === "zh" && zh?.parkUnit ? zh.parkUnit : trail.parkUnit;
+  const formatPickedShortLocalized = (d: PickedDate) =>
+    locale === "zh" ? `${d.month} 月 ${d.day} 日` : `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.month-1]} ${d.day}`;
 
   return (
     <aside
@@ -137,7 +139,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           <ShareButton trailId={trail.id} />
           <button
             onClick={() => toggleFavorite(trail.id)}
-            aria-label={favorites.has(trail.id) ? "Remove from favorites" : "Save to favorites"}
+            aria-label={favorites.has(trail.id) ? t("detail.aria.favoriteRemove") : t("detail.aria.favoriteSave")}
             className="rounded-full p-1.5 text-white/55 transition hover:scale-110 hover:bg-white/10 hover:text-white"
           >
             <Heart
@@ -150,7 +152,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           </button>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("detail.aria.close")}
             className="rounded-full p-1.5 text-white/55 transition hover:rotate-90 hover:bg-white/10 hover:text-white"
           >
             <X className="h-4 w-4" />
@@ -160,23 +162,23 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         <div className="mb-1 flex items-center gap-2">
           <span className="inline-block h-2 w-2 rounded-full" style={{ background: diffColor }} />
           <span className="text-[11px] uppercase tracking-[0.16em] text-white/55">
-            {trail.parkUnit}
+            {trailParkUnit}
           </span>
         </div>
         <h2 className="font-display text-2xl leading-tight text-white">{trail.name}</h2>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <Badge className={`diff-${trail.difficulty}`}>{DIFFICULTY_LABEL[trail.difficulty]}</Badge>
+          <Badge className={`diff-${trail.difficulty}`}>{t(`difficulty.${trail.difficulty}` as StringKey)}</Badge>
           <Badge className="border-white/15 bg-white/5 text-white/80">
-            {TYPE_LABEL[trail.type]}
+            {t(`type.${trail.type}` as StringKey)}
           </Badge>
           <Badge className="border-white/15 bg-white/5 text-white/80">
-            {ECOSYSTEM_LABEL[trail.ecosystem]}
+            {t(`ecosystem.${trail.ecosystem}` as StringKey)}
           </Badge>
           {trail.permitRequired && (
             <Badge className="border-ember-500/30 bg-ember-500/15 text-ember-400">
               <TicketCheck className="mr-1 inline h-3 w-3" />
-              Permit required
+              {t("detail.permitRequired")}
             </Badge>
           )}
         </div>
@@ -186,29 +188,29 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
       <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-6 pt-2">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 [&>*]:animate-rise" style={stagger(0)}>
-          <Stat icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={`${trail.lengthMiles} mi`} />
+          <Stat icon={<Ruler className="h-3.5 w-3.5" />} label={t("stats.length")} value={fmtDistance(trail.lengthMiles)} />
           <Stat
             icon={<TrendingUp className="h-3.5 w-3.5" />}
-            label="Gain"
-            value={`${trail.elevationGainFt.toLocaleString()} ft`}
+            label={t("stats.gain")}
+            value={fmtElevation(trail.elevationGainFt)}
           />
-          <Stat icon={<Mountain className="h-3.5 w-3.5" />} label="State" value={trail.state} />
+          <Stat icon={<Mountain className="h-3.5 w-3.5" />} label={t("stats.state")} value={trail.state} />
         </div>
 
         {/* Description */}
-        <Section title="About" accent="neutral" delay={1}>
-          <p className="text-[13.5px] leading-relaxed text-white/80">{trail.description}</p>
+        <Section title={t("section.about")} accent="neutral" delay={1}>
+          <p className="text-[13.5px] leading-relaxed text-white/80">{trailDescription}</p>
         </Section>
 
         {/* Elevation profile */}
-        <Section title="Elevation Profile" accent="forest" delay={2}>
+        <Section title={t("section.elevation")} accent="forest" delay={2}>
           <ElevationProfile trailId={trail.id} />
         </Section>
 
         {/* Highlights */}
-        <Section title="Highlights" accent="ember" delay={3}>
+        <Section title={t("section.highlights")} accent="ember" delay={3}>
           <ul className="space-y-1.5">
-            {trail.highlights.map((h, i) => (
+            {trailHighlights.map((h, i) => (
               <li
                 key={h}
                 className="flex animate-rise items-start gap-2 text-[13px] text-white/75"
@@ -223,7 +225,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
         {/* Best season hint */}
         <Section
-          title="Best Time to Hike"
+          title={t("section.bestTime")}
           accent="forest"
           delay={4}
           right={
@@ -235,7 +237,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
         {/* Weather for the picked date */}
         <Section
-          title={`Weather around ${formatPickedShort(date)}`}
+          title={t("section.weatherAround", { date: formatPickedShortLocalized(date) })}
           accent="blue"
           delay={5}
           right={
@@ -252,7 +254,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           {weatherLoading && <WeatherSkeleton />}
           {weatherError && (
             <div className="rounded-md bg-red-500/10 p-3 text-[12px] text-red-300">
-              Couldn't load weather: {weatherError}
+              {t("weather.error", { err: weatherError })}
             </div>
           )}
           {dateNormal && <DateWeatherCard normal={dateNormal} />}
@@ -262,7 +264,10 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
 
         {/* Gear */}
         <Section
-          title={`Gear for ${season} ${trail.type === "day" ? "day hike" : trail.type === "thru-hike" ? "thru-hike" : "backpack"}`}
+          title={t("section.gearFor", {
+            season: t(`seasonShort.${season}` as StringKey),
+            type: t(`typeShort.${trail.type}` as StringKey),
+          })}
           accent="ember"
           delay={6}
         >
@@ -279,7 +284,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
                 >
                   <div className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/55">
                     <CatIcon className="h-3.5 w-3.5 text-forest-300" />
-                    {CATEGORY_LABEL[cat]}
+                    {t(`gearCat.${cat}` as StringKey)}
                     <span className="ml-auto text-[10px] font-normal text-white/30">
                       {items.length}
                     </span>
@@ -307,7 +312,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
                               <span className="text-white/90">{it.name}</span>
                               {it.essential && (
                                 <span className="text-[9.5px] font-semibold uppercase tracking-wider text-ember-400/85">
-                                  essential
+                                  {t("gear.essential")}
                                 </span>
                               )}
                             </div>
@@ -333,14 +338,14 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
             rel="noopener"
             className="group flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:border-forest-400/40 hover:bg-forest-500/15 hover:text-white"
           >
-            Official trail info
+            {t("gear.officialLink")}
             <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         )}
 
         <div className="flex items-center gap-2 text-[11px] text-white/40">
           <MapPin className="h-3 w-3" />
-          Trailhead: {trail.trailhead.lat.toFixed(4)}, {trail.trailhead.lng.toFixed(4)}
+          {t("gear.trailhead", { coords: `${trail.trailhead.lat.toFixed(4)}, ${trail.trailhead.lng.toFixed(4)}` })}
         </div>
       </div>
     </aside>
@@ -420,7 +425,8 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 }
 
 function BestSeasonsLine({ seasons }: { seasons: Season[] }) {
-  const label = seasons.map((s) => s[0].toUpperCase() + s.slice(1)).join(" · ");
+  const { t } = useLocale();
+  const label = seasons.map((s) => t(`season.${s}` as StringKey)).join(" · ");
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-forest-500/15 px-2 py-0.5 text-[10px] text-forest-200">
       <Sparkles className="h-2.5 w-2.5" />
@@ -430,6 +436,7 @@ function BestSeasonsLine({ seasons }: { seasons: Season[] }) {
 }
 
 function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> }) {
+  const { t, fmtTemp, fmtPrecip, tempValue } = useLocale();
   const highSpread = normal.rangeHighF[1] - normal.rangeHighF[0];
   return (
     <div
@@ -440,19 +447,19 @@ function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> 
         <div>
           <div className="flex items-baseline gap-1.5">
             <span className="font-display text-3xl leading-none text-white">
-              {normal.avgHighF}°
+              {fmtTemp(normal.avgHighF)}
             </span>
             <span className="text-base text-white/40">/</span>
-            <span className="text-xl text-white/65">{normal.avgLowF}°</span>
+            <span className="text-xl text-white/65">{fmtTemp(normal.avgLowF)}</span>
           </div>
           <div className="mt-1 text-[10px] uppercase tracking-wider text-white/45">
-            Avg high / low (past {normal.years} yrs)
+            {t("weather.avgHighLow", { n: normal.years })}
           </div>
         </div>
         {normal.snowLikely && (
           <div className="flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-1 text-[11px] text-blue-200 ring-1 ring-blue-400/20">
             <Snowflake className="h-3 w-3" />
-            Snow likely
+            {t("weather.snowLikely")}
           </div>
         )}
       </div>
@@ -460,13 +467,13 @@ function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> 
       {/* Range bar */}
       <div className="mt-3 space-y-2">
         <RangeBar
-          label="High"
+          label={t("weather.high")}
           range={normal.rangeHighF}
           avg={normal.avgHighF}
           color="from-ember-400 to-ember-600"
         />
         <RangeBar
-          label="Low"
+          label={t("weather.low")}
           range={normal.rangeLowF}
           avg={normal.avgLowF}
           color="from-blue-300 to-blue-500"
@@ -476,18 +483,18 @@ function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> 
       <div className="mt-3 flex gap-2 border-t border-white/8 pt-3 text-[11px] text-white/65">
         <div className="flex items-center gap-1">
           <Droplets className="h-3 w-3 text-blue-300" />
-          {normal.precipInches}″ avg precip
+          {t("weather.precipAvg", { v: fmtPrecip(normal.precipInches) })}
         </div>
         <div className="text-white/30">·</div>
         <div className="text-white/55">
-          ~{normal.precipDays} of {normal.years} years saw rain
+          {t("weather.precipDays", { a: normal.precipDays, b: normal.years })}
         </div>
       </div>
       {Math.abs(highSpread) > 25 && (
         <div className="mt-2 flex items-start gap-1 text-[10.5px] text-white/45">
           <Thermometer className="mt-px h-3 w-3" />
           <span>
-            High spread of {highSpread}°F means weather is variable on this date — pack layers.
+            {t("weather.variability", { v: Math.abs(tempValue(normal.rangeHighF[1]) - tempValue(normal.rangeHighF[0])) })}
           </span>
         </div>
       )}
@@ -506,6 +513,7 @@ function RangeBar({
   avg: number;
   color: string;
 }) {
+  const { tempValue, locale } = useLocale();
   const lo = range[0];
   const hi = range[1];
   // Anchor the bar within a fixed temp window for visual stability
@@ -515,12 +523,13 @@ function RangeBar({
   const left = ((lo - VIEW_MIN) / span) * 100;
   const width = ((hi - lo) / span) * 100;
   const avgPos = ((avg - VIEW_MIN) / span) * 100;
+  const unit = locale === "zh" ? "°C" : "°F";
   return (
     <div>
       <div className="mb-0.5 flex items-center justify-between text-[10px] text-white/45">
         <span className="uppercase tracking-wider">{label}</span>
         <span className="font-mono text-white/65">
-          {lo}° – {hi}°F
+          {tempValue(lo)}° – {tempValue(hi)}{unit}
         </span>
       </div>
       <div className="relative h-2 overflow-hidden rounded-full bg-white/5">
@@ -544,6 +553,8 @@ function ClimateChart({
   normals: ReturnType<typeof monthlyNormals>;
   highlightMonth: number;
 }) {
+  const { t, tempValue, locale } = useLocale();
+  const monthLabel = (m: number) => t(`monthShort.${m}` as StringKey);
   const allTemps = normals.flatMap((n) => [n.tempMaxF, n.tempMinF]);
   const rawMin = Math.min(...allTemps);
   const rawMax = Math.max(...allTemps);
@@ -585,9 +596,9 @@ function ClimateChart({
   return (
     <div className="mt-3 overflow-hidden rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
-        <span className="truncate">Year-round avg high / low °F</span>
+        <span className="truncate">{t("weather.yearRound")}</span>
         <span className="shrink-0 whitespace-nowrap">
-          {rawMin}° – {rawMax}°
+          {tempValue(rawMin)}° – {tempValue(rawMax)}°
         </span>
       </div>
 
@@ -615,24 +626,24 @@ function ClimateChart({
           </defs>
 
           {/* y-axis dotted gridlines (label sits inside the chart, right-aligned) */}
-          {ticks.map((t) => (
-            <g key={t}>
+          {ticks.map((tickF) => (
+            <g key={tickF}>
               <line
                 x1={PADX}
                 x2={W - PADX}
-                y1={yAt(t)}
-                y2={yAt(t)}
+                y1={yAt(tickF)}
+                y2={yAt(tickF)}
                 stroke="rgba(255,255,255,0.08)"
                 strokeDasharray="2 4"
               />
               <text
                 x={W - PADX - 2}
-                y={yAt(t) - 2}
+                y={yAt(tickF) - 2}
                 fontSize="9"
                 fill="rgba(255,255,255,0.4)"
                 textAnchor="end"
               >
-                {t}°
+                {tempValue(tickF)}°
               </text>
             </g>
           ))}
@@ -691,7 +702,7 @@ function ClimateChart({
                   fill="#ffd6b8"
                   textAnchor="middle"
                 >
-                  {sel.tempMaxF}°
+                  {tempValue(sel.tempMaxF)}°
                 </text>
                 <text
                   x={labelX}
@@ -701,7 +712,7 @@ function ClimateChart({
                   fill="#bdd6ff"
                   textAnchor="middle"
                 >
-                  {sel.tempMinF}°
+                  {tempValue(sel.tempMinF)}°
                 </text>
               </>
             );
@@ -718,7 +729,7 @@ function ClimateChart({
                 n.month === highlightMonth ? "font-semibold text-white" : "text-white/55",
               )}
             >
-              {MONTH_NAMES_SHORT[n.month - 1]}
+              {monthLabel(n.month)}
             </div>
           ))}
         </div>
@@ -728,26 +739,27 @@ function ClimateChart({
 }
 
 function Forecast({ days }: { days: ForecastDay[] }) {
+  const { t, locale, tempValue, fmtWind } = useLocale();
   return (
     <div className="mt-3 rounded-lg bg-black/20 p-3 ring-1 ring-white/6">
       <div className="mb-2 text-[10px] uppercase tracking-wider text-white/40">
-        Live 7-day forecast at trailhead
+        {t("weather.forecastTitle")}
       </div>
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((d, i) => {
           const dt = new Date(d.date);
-          const wd = dt.toLocaleDateString("en-US", { weekday: "short" });
+          const wd = dt.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { weekday: "short" });
           return (
             <div
               key={d.date}
-              title={`${weatherLabel(d.weatherCode)} · wind ${d.windMph} mph`}
+              title={t("weather.tooltipWind", { label: weatherLabel(d.weatherCode), wind: fmtWind(d.windMph) })}
               className="flex animate-rise flex-col items-center rounded-md bg-black/20 px-1 py-2 transition-colors hover:bg-black/30"
               style={{ animationDelay: `${0.45 + i * 0.04}s` }}
             >
               <div className="text-[10px] text-white/55">{wd}</div>
               <div className="my-0.5 text-base">{weatherEmoji(d.weatherCode)}</div>
-              <div className="text-[11px] font-semibold text-white">{d.tempMaxF}°</div>
-              <div className="text-[10px] text-white/50">{d.tempMinF}°</div>
+              <div className="text-[11px] font-semibold text-white">{tempValue(d.tempMaxF)}°</div>
+              <div className="text-[10px] text-white/50">{tempValue(d.tempMinF)}°</div>
             </div>
           );
         })}

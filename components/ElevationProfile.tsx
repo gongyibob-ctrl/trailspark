@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { TrendingUp, MapPin } from "lucide-react";
 import { getElevationProfile, type ElevationProfile as Profile } from "@/lib/elevation";
 import { isLoaded as geometriesLoaded } from "@/lib/geometries";
+import { useLocale } from "@/lib/i18n";
 
 export default function ElevationProfile({ trailId }: { trailId: string }) {
+  const { t, fmtDistance, fmtElevation, fmtElevationShort, locale } = useLocale();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -46,23 +48,36 @@ export default function ElevationProfile({ trailId }: { trailId: string }) {
   if (err) {
     return (
       <div className="rounded-md bg-red-500/10 p-3 text-[12px] text-red-300">
-        Couldn't load elevation: {err}
+        {t("elevation.loadFailed", { err })}
       </div>
     );
   }
   if (!profile) {
-    // No geometry → no profile. Stay silent rather than show an error card.
     return (
       <div className="rounded-md bg-white/5 p-3 text-[11px] italic text-white/45">
-        No trail geometry available — elevation profile is only shown for trails with mapped routes.
+        {t("elevation.noGeometry")}
       </div>
     );
   }
 
-  return <Chart profile={profile} />;
+  return <Chart profile={profile} t={t} fmtDistance={fmtDistance} fmtElevation={fmtElevation} fmtElevationShort={fmtElevationShort} locale={locale} />;
 }
 
-function Chart({ profile }: { profile: Profile }) {
+function Chart({
+  profile,
+  t,
+  fmtDistance,
+  fmtElevation,
+  fmtElevationShort,
+  locale,
+}: {
+  profile: Profile;
+  t: (k: any, v?: any) => string;
+  fmtDistance: (mi: number) => string;
+  fmtElevation: (ft: number) => string;
+  fmtElevationShort: (ft: number) => string;
+  locale: "en" | "zh";
+}) {
   const W = 400;
   const H = 110;
   const PADX = 12;
@@ -103,11 +118,11 @@ function Chart({ profile }: { profile: Profile }) {
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
         <span className="flex items-center gap-1.5 truncate">
           <TrendingUp className="h-3 w-3 shrink-0" />
-          Elevation profile
+          {t("elevation.label")}
         </span>
         <span className="shrink-0 whitespace-nowrap">
-          <span className="text-ember-400">+{profile.totalGainFt.toLocaleString()}′</span>{" "}
-          <span className="text-white/35">cumulative</span>
+          <span className="text-ember-400">+{fmtElevation(profile.totalGainFt)}</span>{" "}
+          <span className="text-white/35">{t("elevation.cumulative")}</span>
         </span>
       </div>
 
@@ -131,24 +146,24 @@ function Chart({ profile }: { profile: Profile }) {
           </defs>
 
           {/* y-axis dotted gridlines (label sits inside the chart, right-aligned) */}
-          {ticks.map((t) => (
-            <g key={t}>
+          {ticks.map((tickFt) => (
+            <g key={tickFt}>
               <line
                 x1={PADX}
                 x2={W - PADX}
-                y1={yAt(t)}
-                y2={yAt(t)}
+                y1={yAt(tickFt)}
+                y2={yAt(tickFt)}
                 stroke="rgba(255,255,255,0.06)"
                 strokeDasharray="2 4"
               />
               <text
                 x={W - PADX - 2}
-                y={yAt(t) - 2}
+                y={yAt(tickFt) - 2}
                 fontSize="9"
                 fill="rgba(255,255,255,0.4)"
                 textAnchor="end"
               >
-                {t.toLocaleString()}′
+                {fmtElevationShort(tickFt)}
               </text>
             </g>
           ))}
@@ -177,7 +192,7 @@ function Chart({ profile }: { profile: Profile }) {
             fill="#ffd6b8"
             textAnchor="middle"
           >
-            ▲ {high.feet.toLocaleString()}′
+            ▲ {fmtElevationShort(high.feet)}
           </text>
           {/* end dot */}
           <circle cx={xAt(end.miles)} cy={yAt(end.feet)} r="3" fill="#a0bda8" stroke="#fff" strokeWidth="1" />
@@ -187,9 +202,9 @@ function Chart({ profile }: { profile: Profile }) {
         <div className="mt-1 flex justify-between px-3 text-[10px] text-white/40">
           <span className="flex items-center gap-1">
             <MapPin className="h-2.5 w-2.5" />
-            Trailhead {start.feet.toLocaleString()}′
+            {t("elevation.trailhead")} {fmtElevation(start.feet)}
           </span>
-          <span>{profile.totalMiles.toFixed(1)} mi</span>
+          <span>{fmtDistance(profile.totalMiles)}</span>
         </div>
       </div>
     </div>

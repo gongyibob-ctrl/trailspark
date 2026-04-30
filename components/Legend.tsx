@@ -41,11 +41,13 @@ function CompassGlyph({ className }: { className?: string }) {
     </svg>
   );
 }
-import { DIFFICULTY_COLOR, DIFFICULTY_LABEL, type Difficulty } from "@/lib/types";
+import { DIFFICULTY_COLOR, type Difficulty } from "@/lib/types";
+import { useLocale, type StringKey } from "@/lib/i18n";
 
 const DIFFICULTIES: Difficulty[] = ["easy", "moderate", "hard", "extreme"];
 
 export default function Legend() {
+  const { t } = useLocale();
   const [open, setOpen] = useState(true);
 
   return (
@@ -55,7 +57,7 @@ export default function Legend() {
           onClick={() => setOpen((v) => !v)}
           className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60 transition-colors hover:text-white/85"
         >
-          <span>Legend</span>
+          <span>{t("legend.title")}</span>
           {open ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
         </button>
 
@@ -74,7 +76,7 @@ export default function Legend() {
                       className="block h-2.5 w-6 rounded-full"
                       style={{ background: DIFFICULTY_COLOR[d] }}
                     />
-                    <span className="text-white/75">{DIFFICULTY_LABEL[d]}</span>
+                    <span className="text-white/75">{t(`difficulty.${d}` as StringKey)}</span>
                   </div>
                 ))}
               </div>
@@ -83,13 +85,13 @@ export default function Legend() {
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
                     <TentGlyph className="h-3 w-3 text-white/85" />
                   </span>
-                  Multi-day
+                  {t("type.multi-day")}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/15">
                     <CompassGlyph className="h-3 w-3 text-white/85" />
                   </span>
-                  Thru-hike
+                  {t("type.thru-hike")}
                 </div>
               </div>
             </div>
