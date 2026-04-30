@@ -18,7 +18,10 @@ import type { Difficulty, Popularity, Region, Trail, TrailType } from "@/lib/typ
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
+import { haversineKm } from "@/lib/geo";
 import clsx from "clsx";
+
+const KM_TO_MI = 0.621371;
 
 interface SidebarProps {
   trails: Trail[];
@@ -29,6 +32,7 @@ interface SidebarProps {
   onFilterChange: (filtered: Trail[]) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  userPosition: { lat: number; lng: number } | null;
 }
 
 export default function Sidebar({
@@ -40,6 +44,7 @@ export default function Sidebar({
   onFilterChange,
   collapsed,
   onToggleCollapsed,
+  userPosition,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [regions, setRegions] = useState<Set<Region>>(new Set());
@@ -96,7 +101,7 @@ export default function Sidebar({
     <>
       <aside
         className={clsx(
-          "absolute left-0 top-0 z-20 flex h-full w-[380px] flex-col glass transition-transform duration-300",
+          "absolute left-0 top-0 z-20 flex h-full w-full flex-col glass transition-transform duration-300 sm:w-[380px]",
           collapsed ? "-translate-x-full ease-in" : "translate-x-0 ease-out",
         )}
         aria-hidden={collapsed}
@@ -282,6 +287,14 @@ export default function Sidebar({
                 onClick={() => onSelect(t.id)}
                 onToggleFavorite={() => toggleFavorite(t.id)}
                 index={i}
+                distanceKm={
+                  userPosition
+                    ? haversineKm(
+                        [userPosition.lng, userPosition.lat],
+                        [t.trailhead.lng, t.trailhead.lat],
+                      )
+                    : null
+                }
               />
             ))}
           </ul>
@@ -361,6 +374,7 @@ function TrailCard({
   onClick,
   onToggleFavorite,
   index,
+  distanceKm,
 }: {
   trail: Trail;
   selected: boolean;
@@ -368,9 +382,19 @@ function TrailCard({
   onClick: () => void;
   onToggleFavorite: () => void;
   index: number;
+  distanceKm: number | null;
 }) {
   const { locale, t, fmtDistance, fmtElevation } = useLocale();
   const parkUnitLabel = pickLocalized(locale, TRAILS_ZH[trail.id]?.parkUnit, trail.parkUnit);
+  const distanceLabel =
+    distanceKm == null
+      ? null
+      : (() => {
+          const value = locale === "zh" ? distanceKm : distanceKm * KM_TO_MI;
+          const unit = locale === "zh" ? "公里" : "mi";
+          const n = value < 10 ? value.toFixed(1) : Math.round(value).toString();
+          return t("locate.away", { n: `${n} ${unit}` });
+        })();
   return (
     <li
       className="animate-rise"
@@ -392,8 +416,14 @@ function TrailCard({
             />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium text-white">{trail.name}</div>
-              <div className="mt-0.5 truncate text-[11px] text-white/55">
-                {parkUnitLabel}
+              <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-white/55">
+                <span className="truncate">{parkUnitLabel}</span>
+                {distanceLabel && (
+                  <>
+                    <span className="text-white/25">·</span>
+                    <span className="shrink-0 text-blue-300/85">{distanceLabel}</span>
+                  </>
+                )}
               </div>
               <div className="mt-1 flex items-center gap-2 text-[11px] text-white/65">
                 <span>{fmtDistance(trail.lengthMiles)}</span>

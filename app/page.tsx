@@ -8,14 +8,21 @@ import Sidebar from "@/components/Sidebar";
 import TrailDetail from "@/components/TrailDetail";
 import UserTrailDetail from "@/components/UserTrailDetail";
 import Legend from "@/components/Legend";
+import LocateButton from "@/components/LocateButton";
 import GPXDropZone from "@/components/GPXDropZone";
 import type { Trail } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import { useUploads } from "@/lib/uploads";
+import { useGeolocation } from "@/lib/use-geolocation";
 
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 
 const QUERY_PARAM = "trail";
+
+const MOBILE_QUERY = "(max-width: 639px)";
+function isMobileNow(): boolean {
+  return typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches;
+}
 
 function readTrailFromURL(): string | null {
   if (typeof window === "undefined") return null;
@@ -36,9 +43,12 @@ export default function Page() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flyToId, setFlyToId] = useState<string | null>(null);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>(TRAILS);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Sidebar starts collapsed on mobile so the map is visible first.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => isMobileNow());
+  const [recenterTick, setRecenterTick] = useState(0);
   const { t } = useLocale();
   const { uploads, remove: removeUpload } = useUploads();
+  const { position: userPosition, status: geoStatus, start: startGeo } = useGeolocation();
 
   useEffect(() => {
     const fromUrl = readTrailFromURL();
@@ -60,10 +70,18 @@ export default function Page() {
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
     setFlyToId(id);
+    // On phones the sidebar is full-screen; auto-close it so the user can see
+    // the map fly to the picked trail before the detail panel slides in.
+    if (isMobileNow()) setSidebarCollapsed(true);
     // Only persist curated-trail selection in the URL — user uploads are
     // local-only, so a shareable link makes no sense for them.
     writeTrailToURL(isUserTrailId(id) ? null : id);
   }, []);
+
+  const handleLocate = useCallback(() => {
+    startGeo();
+    setRecenterTick((n) => n + 1);
+  }, [startGeo]);
 
   const handleClose = useCallback(() => {
     setSelectedId(null);
@@ -88,13 +106,15 @@ export default function Page() {
       : null;
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-forest-950">
+    <main className="relative h-screen w-screen overflow-hidden bg-forest-950 [height:100dvh]">
       <Map
         trails={filteredTrails}
         userTrails={uploads}
         selectedId={selectedId}
         onSelect={handleSelect}
         flyToId={flyToId}
+        userPosition={userPosition}
+        recenterTick={recenterTick}
       />
 
       <Sidebar
@@ -106,6 +126,7 @@ export default function Page() {
         onFilterChange={handleFilterChange}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        userPosition={userPosition}
       />
 
       <TrailDetail trail={selectedTrail} onClose={handleClose} />
@@ -117,13 +138,20 @@ export default function Page() {
         />
       )}
 
-      <Legend />
+      <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex flex-col items-end gap-2">
+        <LocateButton
+          status={geoStatus}
+          hasPosition={!!userPosition}
+          onClick={handleLocate}
+        />
+        <Legend />
+      </div>
 
       <GPXDropZone onUploaded={(id) => handleSelect(id)} />
 
       <div
         className={clsx(
-          "pointer-events-none absolute bottom-3 z-10 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/35 transition-[left] duration-300 ease-out",
+          "pointer-events-none absolute bottom-3 z-10 hidden items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/35 transition-[left] duration-300 ease-out sm:flex",
           sidebarCollapsed ? "left-[120px]" : "left-[400px]",
         )}
       >

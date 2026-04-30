@@ -159,7 +159,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
   return (
     <aside
       key={trail.id}
-      className="absolute right-0 top-0 z-30 flex h-full w-[460px] animate-slide-in-right flex-col glass"
+      className="absolute right-0 top-0 z-30 flex h-full w-full animate-slide-in-right flex-col glass sm:w-[460px]"
     >
       {/* Header */}
       <div className="relative px-5 pb-4 pt-5">

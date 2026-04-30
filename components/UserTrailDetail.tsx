@@ -79,7 +79,7 @@ export default function UserTrailDetail({ trail, onClose, onDelete }: UserTrailD
   return (
     <aside
       key={trail.id}
-      className="absolute right-0 top-0 z-30 flex h-full w-[460px] animate-slide-in-right flex-col glass"
+      className="absolute right-0 top-0 z-30 flex h-full w-full animate-slide-in-right flex-col glass sm:w-[460px]"
     >
       <div className="relative px-5 pb-4 pt-5">
         <div className="absolute right-3 top-3 flex items-center gap-1">

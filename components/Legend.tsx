@@ -51,7 +51,7 @@ export default function Legend() {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="pointer-events-auto absolute bottom-8 right-3 z-10 select-none">
+    <div className="pointer-events-auto select-none">
       <div className="glass overflow-hidden rounded-lg ring-1 ring-white/8 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
         <button
           onClick={() => setOpen((v) => !v)}

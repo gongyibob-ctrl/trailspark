@@ -282,6 +282,15 @@ export const STRINGS = {
   "monthFull.10":               { en: "October",   zh: "10 月" },
   "monthFull.11":               { en: "November",  zh: "11 月" },
   "monthFull.12":               { en: "December",  zh: "12 月" },
+
+  // Geolocation
+  "locate.button":              { en: "My location",      zh: "我的位置" },
+  "locate.recenter":            { en: "Recenter on me",   zh: "回到我的位置" },
+  "locate.requesting":          { en: "Locating…",        zh: "定位中…" },
+  "locate.denied":              { en: "Location blocked — enable it in your browser settings", zh: "已阻止定位 — 请在浏览器设置中开启" },
+  "locate.unavailable":         { en: "Location not available on this device", zh: "此设备不支持定位" },
+  "locate.error":               { en: "Couldn't get your location", zh: "无法获取位置" },
+  "locate.away":                { en: "{n} away",         zh: "距您 {n}" },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

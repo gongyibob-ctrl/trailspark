@@ -23,6 +23,10 @@ interface MapProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   flyToId: string | null;
+  /** Live device position. When non-null, a pulsing marker is rendered. */
+  userPosition: { lat: number; lng: number } | null;
+  /** Bumping this counter recenters the map on userPosition (if known). */
+  recenterTick: number;
 }
 
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
@@ -144,10 +148,19 @@ const DIFFICULTY_COLOR_EXPR = [
   "#ffffff",
 ] as any;
 
-export default function Map({ trails, userTrails, selectedId, onSelect, flyToId }: MapProps) {
+export default function Map({
+  trails,
+  userTrails,
+  selectedId,
+  onSelect,
+  flyToId,
+  userPosition,
+  recenterTick,
+}: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Record<string, Marker>>({});
+  const userMarkerRef = useRef<Marker | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -649,6 +662,51 @@ export default function Map({ trails, userTrails, selectedId, onSelect, flyToId 
       });
     }
   }, [flyToId, trails, userTrails]);
+
+  // User-location marker: create once when first position arrives, then move
+  // it on subsequent updates instead of re-creating (so the CSS pulse keeps
+  // its phase and the DOM node stays stable).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!userPosition) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      return;
+    }
+    const lngLat: [number, number] = [userPosition.lng, userPosition.lat];
+    if (!userMarkerRef.current) {
+      const el = document.createElement("div");
+      el.className = "user-loc";
+      userMarkerRef.current = new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat(lngLat)
+        .addTo(map);
+    } else {
+      userMarkerRef.current.setLngLat(lngLat);
+    }
+  }, [userPosition]);
+
+  // Recenter on user. Triggers on first acquisition (boolean transition of
+  // !!userPosition) or any explicit tap of the locate button (recenterTick).
+  const hadPositionRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userPosition) {
+      hadPositionRef.current = false;
+      return;
+    }
+    const isFirstFix = !hadPositionRef.current;
+    hadPositionRef.current = true;
+    map.flyTo({
+      center: [userPosition.lng, userPosition.lat],
+      zoom: isFirstFix ? 10 : Math.max(map.getZoom(), 11),
+      duration: 1400,
+      essential: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterTick, !!userPosition]);
 
   return (
     <div className="absolute inset-0 bg-forest-950">
