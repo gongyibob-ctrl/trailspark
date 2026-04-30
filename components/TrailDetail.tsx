@@ -388,8 +388,8 @@ function Badge({ className, children }: { className?: string; children: React.Re
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-gradient-to-br from-white/8 to-white/3 px-3 py-2 ring-1 ring-white/8">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/45">
+    <div className="rounded-lg bg-white/[0.04] px-3 py-2 ring-1 ring-white/15">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/50">
         {icon}
         {label}
       </div>
@@ -413,7 +413,7 @@ function DateWeatherCard({ normal }: { normal: ReturnType<typeof normalForDate> 
   return (
     <div
       key={`${normal.month}-${normal.day}`}
-      className="animate-rise rounded-xl bg-gradient-to-br from-white/8 to-white/2 p-4 ring-1 ring-white/10"
+      className="animate-rise rounded-xl bg-white/[0.04] p-4 ring-1 ring-white/15"
     >
       <div className="flex items-end justify-between">
         <div>
@@ -562,7 +562,7 @@ function ClimateChart({
   const selX = xAt(highlightMonth - 1);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
+    <div className="mt-3 overflow-hidden rounded-lg bg-white/5 p-3 ring-1 ring-white/12">
       <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-white/40">
         <span className="truncate">Year-round avg high / low °F</span>
         <span className="shrink-0 whitespace-nowrap">
@@ -708,7 +708,7 @@ function ClimateChart({
 
 function Forecast({ days }: { days: ForecastDay[] }) {
   return (
-    <div className="mt-3 rounded-lg bg-white/5 p-3 ring-1 ring-white/8">
+    <div className="mt-3 rounded-lg bg-white/5 p-3 ring-1 ring-white/12">
       <div className="mb-2 text-[10px] uppercase tracking-wider text-white/40">
         Live 7-day forecast at trailhead
       </div>
