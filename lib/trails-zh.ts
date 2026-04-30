@@ -299,8 +299,9 @@ export const TRAILS_ZH: Record<string, TrailZh> = {
   "mt-diablo": {
     parkUnit: "Mt Diablo 州立公园",
     description:
-      "陡攀 3849 英尺山顶，是北美少数能看到最大可视面积的山顶之一：晴天能从内华达山一直看到 Farallon 群岛。",
-    highlights: ["可视面积相当于 35 个州", "野花超级花期", "Mary Bowerman 山顶环线"],
+      "围绕 3849 英尺山顶的一小段解说环线——这里是北美少数能看到最大可视面积的山顶之一，晴天可从内华达山脊一直看到 Farallon 群岛。",
+    highlights: ["可视面积相当于 35 个州", "春季野花超级花期", "山顶观景台"],
+    parking: "South Gate Road 尽头的山顶停车场。州立公园入园费 10 美元/车。停车场小，周末中午停满——建议 11 点前或 15 点后到。",
   },
   "high-peaks-pinnacles": {
     parkUnit: "Pinnacles 国家公园",
