@@ -40,12 +40,14 @@ export const CATEGORY_LABEL: Record<GearCategory, string> = {
 // don't care that your trail is short and urban-adjacent. Headlamp / lighter /
 // insulating-layer / emergency-shelter are upgraded to critical only on
 // remote / alpine / long trails — see needsRemoteEssentials() below.
+//
+// Insulating layer is intentionally NOT in this list — it's added conditionally
+// by needsInsulation() so a 3-mile urban canyon in July doesn't get a puffy.
 const TEN_ESSENTIALS: GearItem[] = [
   { name: "Topographic map", category: "navigation", essential: true, critical: true },
   { name: "Compass or GPS", category: "navigation", essential: true, critical: true },
   { name: "Sun hat & sunglasses", category: "clothing", essential: true },
   { name: "SPF 30+ sunscreen", category: "safety", essential: true },
-  { name: "Insulating layer (fleece or puffy)", category: "clothing", essential: true },
   { name: "Headlamp + spare batteries", category: "electronics", essential: true },
   { name: "First aid kit", category: "safety", essential: true, critical: true },
   { name: "Lighter or matches (waterproof)", category: "safety", essential: true },
@@ -165,6 +167,25 @@ function needsRemoteEssentials(trail: Trail): boolean {
   if (trail.elevationGainFt > 5000) return true;
   if (trail.ecosystem === "alpine" || trail.ecosystem === "subalpine" || trail.ecosystem === "volcanic") return true;
   if (trail.difficulty === "extreme") return true;
+  return false;
+}
+
+// Whether to recommend a fleece/puffy. A summer day hike at low elevation in
+// a non-alpine ecosystem doesn't need one — but anything overnight, anything
+// at altitude, anything long enough to be benighted, and any non-summer day
+// hike on the West Coast does.
+function needsInsulation(trail: Trail, season: Season): boolean {
+  if (trail.type !== "day") return true;
+  if (season !== "summer") return true;
+  if (
+    trail.ecosystem === "alpine" ||
+    trail.ecosystem === "subalpine" ||
+    trail.ecosystem === "volcanic"
+  ) {
+    return true;
+  }
+  if (trail.lengthMiles > 8) return true;
+  if (trail.elevationGainFt > 3000) return true;
   return false;
 }
 
@@ -326,6 +347,13 @@ export function recommendGear(trail: Trail, season: Season): GearItem[] {
   }
 
   items.push(...TEN_ESSENTIALS);
+  if (needsInsulation(trail, season)) {
+    items.push({
+      name: "Insulating layer (fleece or puffy)",
+      category: "clothing",
+      essential: true,
+    });
+  }
   items.push(...ecosystemAdditions(trail, season));
   items.push(...seasonAdditions(season, trail));
   items.push(...permitAdditions(trail));

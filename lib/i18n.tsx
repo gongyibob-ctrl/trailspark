@@ -283,6 +283,23 @@ export const STRINGS = {
   "monthFull.11":               { en: "November",  zh: "11 月" },
   "monthFull.12":               { en: "December",  zh: "12 月" },
 
+  // Scenery rating
+  "scenery.label":              { en: "Scenery",           zh: "风景" },
+  "scenery.5":                  { en: "Legendary",         zh: "震撼级" },
+  "scenery.4":                  { en: "Spectacular",       zh: "壮丽" },
+  "scenery.3":                  { en: "Very scenic",       zh: "风景优美" },
+  "scenery.2":                  { en: "Pleasant",          zh: "舒适" },
+  "scenery.1":                  { en: "Modest",            zh: "一般" },
+
+  // Access / driving directions
+  "access.heading":             { en: "Get there",                       zh: "前往这里" },
+  "access.start":               { en: "Start",                           zh: "起点" },
+  "access.end":                 { en: "End",                             zh: "终点" },
+  "access.returnsToStart":      { en: "Out-and-back / loop — returns to start", zh: "原路返回 / 环线 — 终点回到起点" },
+  "access.openInMaps":          { en: "Directions",                      zh: "导航" },
+  "access.parking":             { en: "Parking",                         zh: "停车" },
+  "access.parkingFallback":     { en: "Park near the trailhead coordinates above. Verify the latest closures and fees on the official site.", zh: "请就近在起点坐标附近停车。出发前请查阅官方信息确认最新关闭与收费情况。" },
+
   // Geolocation
   "locate.button":              { en: "My location",      zh: "我的位置" },
   "locate.recenter":            { en: "Recenter on me",   zh: "回到我的位置" },
@@ -323,6 +340,17 @@ export function fmtDistance(miles: number, locale: Locale): string {
     return `${km < 10 ? km.toFixed(1) : Math.round(km).toLocaleString()} 公里`;
   }
   return `${miles} mi`;
+}
+
+/** "X mi" / "X 公里" from a km input — rounds in both locales (unlike
+ *  fmtDistance, which prints raw miles for en since trail lengths are
+ *  authored to one decimal). Used for haversine results. */
+export function fmtDistanceFromKm(km: number, locale: Locale): string {
+  if (locale === "zh") {
+    return `${km < 10 ? km.toFixed(1) : Math.round(km).toLocaleString()} 公里`;
+  }
+  const miles = km / MI_TO_KM;
+  return `${miles < 10 ? miles.toFixed(1) : Math.round(miles).toLocaleString()} mi`;
 }
 
 export function fmtElevation(feet: number, locale: Locale): string {
@@ -438,6 +466,7 @@ export function useLocale() {
     setLocale: update,
     t: tt,
     fmtDistance: (mi: number) => fmtDistance(mi, locale),
+    fmtDistanceFromKm: (km: number) => fmtDistanceFromKm(km, locale),
     fmtElevation: (ft: number) => fmtElevation(ft, locale),
     fmtElevationShort: (ft: number) => fmtElevationShort(ft, locale),
     fmtTemp: (f: number) => fmtTemp(f, locale),

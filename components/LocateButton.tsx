@@ -12,25 +12,25 @@ interface LocateButtonProps {
   onClick: () => void;
 }
 
+const HINT_KEY: Partial<Record<GeoStatus, StringKey>> = {
+  denied: "locate.denied",
+  unavailable: "locate.unavailable",
+  error: "locate.error",
+};
+
 export default function LocateButton({ status, hasPosition, onClick }: LocateButtonProps) {
   const { t } = useLocale();
   const [hint, setHint] = useState<string | null>(null);
 
-  // Show a transient hint when permission is denied or geolocation errors.
-  // Auto-dismiss after a few seconds so it doesn't linger.
   useEffect(() => {
-    if (status === "denied" || status === "unavailable" || status === "error") {
-      const k =
-        status === "denied"
-          ? "locate.denied"
-          : status === "unavailable"
-            ? "locate.unavailable"
-            : "locate.error";
-      setHint(t(k as StringKey));
-      const id = window.setTimeout(() => setHint(null), 4500);
-      return () => window.clearTimeout(id);
+    const key = HINT_KEY[status];
+    if (!key) {
+      setHint(null);
+      return;
     }
-    setHint(null);
+    setHint(t(key));
+    const id = window.setTimeout(() => setHint(null), 4500);
+    return () => window.clearTimeout(id);
   }, [status, t]);
 
   const busy = status === "prompting" && !hasPosition;

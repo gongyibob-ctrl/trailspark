@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { Star } from "lucide-react";
 
 export type SectionAccent = "neutral" | "forest" | "ember" | "blue" | "violet";
 
@@ -56,6 +57,30 @@ interface StatProps {
   icon: React.ReactNode;
   label: string;
   value: string;
+}
+
+/** Scenery rating, rendered as 5 stars with the first n filled. */
+export function SceneryStars({
+  n,
+  size = "sm",
+  title,
+}: {
+  n: number;
+  size?: "sm" | "md";
+  title?: string;
+}) {
+  const px = size === "md" ? "h-3 w-3" : "h-2.5 w-2.5";
+  return (
+    <span className="inline-flex items-center gap-0.5" title={title} aria-label={title}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={clsx(px, i <= n ? "fill-amber-300 text-amber-300" : "text-white/25")}
+          strokeWidth={1.5}
+        />
+      ))}
+    </span>
+  );
 }
 
 /** Dark-tinted stat card used in the detail-panel header strip. */

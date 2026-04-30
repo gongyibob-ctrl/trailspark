@@ -8,6 +8,8 @@ export interface TrailZh {
   parkUnit: string;
   description: string;
   highlights: string[];
+  /** Optional Chinese override for `Trail.parking`. */
+  parking?: string;
 }
 
 export const TRAILS_ZH: Record<string, TrailZh> = {
@@ -318,5 +320,193 @@ export const TRAILS_ZH: Record<string, TrailZh> = {
     description:
       "西雅图的训练山之王。一段无情的森林上山，离市中心只要 30 分钟车程，登顶是俯瞰 Snoqualmie 谷的草垛山顶。",
     highlights: ["西雅图天际线视野", "喀斯喀特至奥林匹克全景", "全年可达"],
+  },
+
+  // ----- New batch -----
+  "mist-falls": {
+    parkUnit: "国王峡谷国家公园",
+    description:
+      "沿 Kings 河穿越 Paradise Valley 的长距离平路，最终抵达初夏水量充沛、水雾喷过步道的 100 英尺瀑布。",
+    highlights: ["Kings 河峡谷", "100 英尺 Mist 瀑布", "头顶花岗岩穹顶"],
+    parking: "180 号公路东端尽头的 Roads End 起点停车场。门票 35 美元/车（7 天有效）。夏季周末 9 点前停满；可乘免费 Cedar Grove 接驳车。",
+  },
+  "lakes-trail": {
+    parkUnit: "红杉国家公园",
+    description:
+      "从 Wolverton 沿 Watchtower 悬崖攀升到一串冰川湖：Heather、Aster、Emerald、最后是 Pear——全部嵌在花岗岩墙下。",
+    highlights: ["Watchtower 悬崖边缘", "四个冰斗湖", "Pear Lake 花岗岩湖盆"],
+    parking: "Generals Highway 旁的 Wolverton 停车场。门票 35 美元/车。容量充足，但冬季（11–5 月）会因雪封路。",
+  },
+  "moro-rock": {
+    parkUnit: "红杉国家公园",
+    description:
+      "在花岗岩穹顶上凿出的 350 级台阶，登顶 6725 英尺，向东可见整片 Great Western Divide 山脉。",
+    highlights: ["凿岩石阶", "Great Western Divide 全景", "看日落首选"],
+    parking: "Crescent Meadow Road 旁的小停车场。夏季（5 月底–9 月）9–16 点禁止私家车，需乘 Giant Forest Museum 免费接驳车。",
+  },
+  "tokopah-falls": {
+    parkUnit: "红杉国家公园",
+    description:
+      "沿 Marble Fork 穿过松林，抵达从花岗岩崖壁倾泻而下的 1200 英尺瀑布——5 月底至 6 月水量最大。",
+    highlights: ["Marble Fork 峡谷", "1200 英尺 Tokopah 瀑布", "碎石坡上的旱獭"],
+    parking: "Lodgepole 营地白天停车场。门票 35 美元/车。穿过营地走到河上的桥就是起点。",
+  },
+
+  "tom-dick-harry": {
+    parkUnit: "胡德山国家森林",
+    description:
+      "经过 Mirror Lake 经典的胡德山倒影，沿森林山脊到达三峰横切，火山填满整个东方天空。",
+    highlights: ["Mirror Lake 倒影", "胡德山正面视野", "三个石质山峰"],
+    parking: "26 号公路旁 Mirror Lake 起点停车场。需购 Northwest Forest Pass（5 美元/天 或 30 美元/年）。周末 9 点前停满；东侧 0.3 英里有备用停车点。",
+  },
+  "mcneil-point": {
+    parkUnit: "胡德山国家森林",
+    description:
+      "从 Top Spur 起点穿过雪崩百合与鲁冰花草甸，攀升至 6100 英尺胡德山西北肩上的石屋，俯瞰 Sandy 冰川。",
+    highlights: ["Bald Mountain 草甸", "CCC 石屋", "Sandy 冰川眺望"],
+    parking: "FS 1828 号路尽头的 Top Spur 起点，碎石路面颠簸——干燥天气轿车也能开。需 Northwest Forest Pass。约 15 个车位，夏季周末 8 点前停满。",
+  },
+  "tamanawas-falls": {
+    parkUnit: "胡德山国家森林",
+    description:
+      "沿 Cold Spring 溪走一段平缓的森林路，抵达一道宽 110 英尺的水帘——水量适中时可绕到瀑布后面。",
+    highlights: ["Cold Spring 溪", "可走到瀑布后面", "原始森林"],
+    parking: "35 号公路 73 英里处路边停车带（Sherwood 营地对面）。免费，无需通行证。约 25 个车位。",
+  },
+  "cooper-spur": {
+    parkUnit: "胡德山国家森林",
+    description:
+      "胡德山上最高的非技术性徒步——攀升火山东北肩到 8500 英尺，Eliot 冰川就在脚下断裂。",
+    highlights: ["Tilly Jane 庇护所", "Eliot 冰川冰裂缝", "8500 英尺折返石"],
+    parking: "FS 3512 号土路尽头的 Cloud Cap Saddle 起点，从 35 号公路开土路要 25 分钟。需 Northwest Forest Pass。10 月至次年 6 月因雪关闭。",
+  },
+
+  "cinder-cone": {
+    parkUnit: "拉森火山国家公园",
+    description:
+      "在松软火山灰上爬一座完美对称的 700 英尺火山锥，环锥顶俯瞰彩色的 Painted Dunes 与 Fantastic 熔岩床。",
+    highlights: ["Painted Dunes 眺望", "Fantastic 熔岩床", "两道环形火山口可走"],
+    parking: "Butte Lake 营地白天停车场，FS 32N21 路尽头（44 号公路向东 6 英里碎石路）。门票 30 美元/车。30+ 车位，几乎不会满。",
+  },
+
+  "hidden-valley": {
+    parkUnit: "约书亚树国家公园",
+    description:
+      "了解约书亚树花岗岩景观的经典入门：被 100 英尺巨石墙围合的偷牛贼藏匿地，遍布抱石线路。",
+    highlights: ["花岗岩巨石圆形剧场", "世界级抱石", "约书亚树林"],
+    parking: "Park Boulevard 旁的 Hidden Valley 野餐区停车场。门票 30 美元/车（7 天）。凉季周末 9 点至中午停满；建议早到或下午 2 点后。",
+  },
+  "lost-palms-oasis": {
+    parkUnit: "约书亚树国家公园",
+    description:
+      "穿越 Colorado 沙漠干河床与岩脊，抵达一处隐秘峡谷——公园里最大的本地加州扇棕榈群落紧贴泉眼生长。",
+    highlights: ["Cottonwood 泉绿洲", "70+ 棵峡谷扇棕榈", "偶见沙漠大角羊"],
+    parking: "南门入口 Cottonwood Spring 白天停车场（10 号州际公路下）。门票 30 美元/车。全年容量充足。",
+  },
+  "forty-nine-palms": {
+    parkUnit: "约书亚树国家公园",
+    description:
+      "从 Twentynine Palms 镇外的沙漠脊上一道陡坡，抵达一处由泉水滋养、藏在岩石峡谷顶部的扇棕榈绿洲。",
+    highlights: ["Mojave 与 Colorado 沙漠交界", "扇棕榈绿洲", "大角羊足迹"],
+    parking: "62 号公路 Canyon Road 尽头的小停车场。免费（在公园门外）。约 20 个车位，周末 9 点前停满。",
+  },
+
+  "kendall-katwalk": {
+    parkUnit: "Mt Baker–Snoqualmie 国家森林",
+    description:
+      "沿 PCT 长距离上行，抵达一段在花岗岩崖面上炸出的 Katwalk 横切——身后是层层叠叠的喀斯喀特山脉。",
+    highlights: ["岩崖凿出的 Katwalk", "Kendall Peak 山脊线", "夏末欧石南草甸"],
+    parking: "I-90 高速 52 出口（Snoqualmie Pass）的 PCT 起点停车场。需 Northwest Forest Pass（5 美元/天）。两个大停车场，夏季周末 8 点前停满。",
+  },
+  "cutthroat-pass": {
+    parkUnit: "Okanogan-Wenatchee 国家森林",
+    description:
+      "穿过原始落叶松与冷杉林之字形上山，登顶可见喀斯喀特东侧山脉延展——9 月底高山落叶松金黄一片，是西海岸最壮观的秋色之一。",
+    highlights: ["9 月底金色落叶松", "Cutthroat Peak 花岗岩尖塔", "Methow 山谷视野"],
+    parking: "20 号公路 158 英里处的 Rainy Pass PCT 停车场。需 Northwest Forest Pass。20 号公路冬季关闭（约 11 月中至 4 月中）。",
+  },
+
+  "marymere-falls": {
+    parkUnit: "奥林匹克国家公园",
+    description:
+      "奥林匹克最容易的瀑布徒步——沿 Crescent 湖畔老龄道格拉斯冷杉林平走，抵达一条溅入蕨类岩窟的 90 英尺瀑布。",
+    highlights: ["原始道格拉斯冷杉", "90 英尺 Marymere 瀑布", "Crescent 湖岸"],
+    parking: "Crescent 湖边、101 号公路旁的 Storm King 护林站停车场。门票 30 美元/车（7 天）。50+ 车位，几乎不会满。",
+  },
+
+  "lake-22": {
+    parkUnit: "Mt Baker–Snoqualmie 国家森林",
+    description:
+      "穿过古老雪松与道格拉斯冷杉之字形上山，抵达 Pilchuck 山南面悬崖下的冰斗湖——碎石坡、瀑布、应有尽有。",
+    highlights: ["原始雪松林", "Pilchuck 悬崖下冰斗湖", "上山途中的瀑布群"],
+    parking: "Mountain Loop Highway（Granite Falls 东 13 英里）旁的起点停车场。需 Northwest Forest Pass。30 个车位，夏季周末 8 点前停满。",
+  },
+  "chain-lakes": {
+    parkUnit: "Mt Baker–Snoqualmie 国家森林",
+    description:
+      "Mt Baker 在一侧、Mt Shuksan 在另一侧，中间串起四个高山湖——欧石南脊线、蓝莓坡，是喀斯喀特最浓缩的山景之一。",
+    highlights: ["Baker + Shuksan 同框", "四个高山湖", "9 月末欧石南转红"],
+    parking: "542 号公路（Mt Baker Highway）尽头的 Artist Point 停车场。免费。多年只有 7 月中至 9 月才解封通车。",
+  },
+
+  "eaton-canyon": {
+    parkUnit: "Eaton Canyon 自然保护区 / Angeles 国家森林",
+    description:
+      "洛杉矶经典的家庭徒步——沿沙质河床上行至 40 英尺瀑布，藏在阴凉的窄缝里。即使夏天峡谷收窄后也很凉爽。",
+    highlights: ["春季 chaparral 野花", "40 英尺 First Falls", "多次过溪"],
+    parking: "Altadena Drive 旁的 Eaton Canyon 自然中心停车场。免费。80 个车位，周末 9 点前停满；可在 New York Drive 路边备选停车。",
+  },
+  "solstice-canyon": {
+    parkUnit: "Santa Monica 山脉国家娱乐区",
+    description:
+      "Malibu 北侧 sycamore 树荫蔽的峡谷，终点是被烧毁的 Roberts 牧场——石头地基、变野的热带花园、一道终年涓涓细流的瀑布。",
+    highlights: ["焚毁的牧场遗址", "sycamore 林荫小溪", "终年细瀑"],
+    parking: "Corral Canyon Road 旁起点的 NPS 停车场。免费。60 个车位，周末 10–14 点停满。",
+  },
+
+  "mt-st-helens": {
+    parkUnit: "圣海伦斯火山国家纪念地",
+    description:
+      "沿火山灰与房子大小巨石的非技术性攀爬抵达南火山口边缘，脚下 1300 英尺是 1980 年大爆炸留下的圆形凹陷与冒烟的熔岩穹丘。",
+    highlights: ["站在火山口边缘", "俯瞰冒烟熔岩穹丘", "山顶可见 Adams + Hood + Rainier 三座火山"],
+    parking: "FS 830 号路尽头的 Climbers' Bivouac（最后 3 英里碎石路）。4–10 月需登山许可（mtsthelenspermit.com，每天 100 张，春季抽签）。停车需 NW Forest Pass。",
+  },
+
+  "mission-peak": {
+    parkUnit: "Mission Peak 区域保护区",
+    description:
+      "南湾的训练山——沿西坡陡峭暴露地一气爬到标志性的 2517 英尺山顶旗杆，晴天可从 Mt Tam 一直看到 Mt Hamilton。",
+    highlights: ["山顶自拍杆", "南湾 360° 全景", "看日出首选"],
+    parking: "Fremont 的 Stanford Avenue staging area。免费，但位于居民区——周边路严格执行 2 小时限时停车。停车场周末 7 点前停满；Ohlone College 起点是更安静的备选。",
+  },
+  "point-lobos": {
+    parkUnit: "Point Lobos 州立自然保护区",
+    description:
+      "把 North Shore、Cypress Grove、South Shore 几条小路串成环线，绕加州最常被拍摄的海岬一周——海獭、港海豹，还有地球上唯一原生的 Monterey 柏树林。",
+    highlights: ["Cypress Grove 扭曲的柏树", "海狮岩", "Bird Island 看灰鲸"],
+    parking: "1 号公路旁的主入口停车场，10 美元/车日票。容量限流——满后单出单进。周末避开 11–14 点。",
+  },
+  "pfeiffer-falls": {
+    parkUnit: "Pfeiffer Big Sur 州立公园",
+    description:
+      "一段短环线深入红杉树荫的峡谷，经过 60 英尺瀑布，再到 Valley View 观景点眺望 Big Sur 河谷与太平洋的交汇。",
+    highlights: ["60 英尺 Pfeiffer 瀑布", "原始红杉林", "山谷至海洋的眺望"],
+    parking: "1 号公路旁的 Pfeiffer Big Sur 州立公园白天停车场，10 美元/车。2021 年灾后改线重新开放。70 个车位，夏季周末 10–15 点停满。",
+  },
+
+  "mt-scott-crater": {
+    parkUnit: "火山口湖国家公园",
+    description:
+      "Crater Lake 国家公园最高点 8929 英尺——之字形穿越开阔的火山脊，登顶火警瞭望台俯瞰整个火山口与湖最深的蓝色。",
+    highlights: ["公园最高点", "俯视 Crater Lake", "运营中的 CCC 火警瞭望台"],
+    parking: "East Rim Drive 第 17 英里处（距公园总部）的路边停车带。门票 30 美元/车。Rim Drive 通常 6 月底至 10 月开放。",
+  },
+
+  "angels-rest": {
+    parkUnit: "哥伦比亚河峡谷国家风景区",
+    description:
+      "沿峡谷壁陡峭爬升到一块伸出哥伦比亚河上方的玄武岩前突——离波特兰最近的震撼级视野，也是 2017 年 Eagle Creek 大火后正在恢复的森林。",
+    highlights: ["前段的 Coopey 瀑布", "玄武岩前突观景", "灾后恢复的森林"],
+    parking: "历史悠久的 Columbia River Highway 第 28 英里附近的路边停车点。免费。停车点小，周末 8 点前停满；可使用 Bridal Veil 备用停车场。",
   },
 };

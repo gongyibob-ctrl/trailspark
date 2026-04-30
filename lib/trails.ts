@@ -1,4 +1,4 @@
-import type { Trail, Popularity } from "./types";
+import type { Trail, Popularity, Scenery } from "./types";
 
 // Popularity tier per trail id. Read as a positive descriptor of the
 // experience; "Backcountry" is not a danger label, it's a feature for
@@ -66,9 +66,137 @@ const POPULARITY_BY_ID: Record<string, Popularity> = {
   "lost-coast": "backcountry",
   "telescope-peak": "backcountry",
   pct: "backcountry",
+
+  // ----- New batch: filling West-Coast gap regions -----
+  "mist-falls": "popular",
+  "lakes-trail": "steady",
+  "moro-rock": "iconic",
+  "tokopah-falls": "popular",
+  "tom-dick-harry": "popular",
+  "mcneil-point": "steady",
+  "tamanawas-falls": "popular",
+  "cooper-spur": "steady",
+  "cinder-cone": "steady",
+  "hidden-valley": "iconic",
+  "lost-palms-oasis": "steady",
+  "forty-nine-palms": "popular",
+  "kendall-katwalk": "popular",
+  "cutthroat-pass": "popular",
+  "marymere-falls": "popular",
+  "lake-22": "iconic",
+  "chain-lakes": "popular",
+  "eaton-canyon": "iconic",
+  "solstice-canyon": "popular",
+  "mt-st-helens": "popular",
+  "mission-peak": "iconic",
+  "point-lobos": "iconic",
+  "pfeiffer-falls": "popular",
+  "mt-scott-crater": "steady",
+  "angels-rest": "iconic",
 };
 
-const RAW_TRAILS: Omit<Trail, "popularity">[] = [
+/** Scenery rating, 1–5. See lib/types.ts.  Calibration:
+ *  5 = legendary (Half Dome, Crater Lake rim, Hurricane Hill);
+ *  4 = spectacular (most National-Park alpine);
+ *  3 = very scenic (Bay Area summit views, urban-edge canyons);
+ *  2 = pleasant (training mountains, forest connectors). */
+const SCENERY_BY_ID: Record<string, Scenery> = {
+  // Yosemite + High Sierra
+  "half-dome": 5,
+  "clouds-rest": 5,
+  "mist-trail": 5,
+  "upper-yosemite-falls": 4,
+  "cathedral-lakes": 5,
+  "sentinel-taft": 5,
+  "mt-whitney": 5,
+  jmt: 5,
+  "rae-lakes": 5,
+  "tahoe-rim": 5,
+  // Cascades / Rainier / N. Cascades
+  "skyline-paradise": 5,
+  burroughs: 4,
+  "tolmie-peak": 4,
+  wonderland: 5,
+  "naches-peak": 4,
+  "cascade-pass": 5,
+  "blue-lake": 4,
+  "maple-pass": 5,
+  "hidden-lake": 5,
+  heliotrope: 4,
+  "mt-si": 2,
+  // Olympic
+  "hurricane-hill": 5,
+  "hall-of-mosses": 5,
+  "shi-shi": 5,
+  "high-divide": 5,
+  "sol-duc-falls": 4,
+  "storm-king": 4,
+  // Oregon
+  "multnomah-wahkeena": 5,
+  "eagle-creek": 4,
+  "smith-rock": 5,
+  "south-sister": 5,
+  "garfield-peak": 5,
+  timberline: 5,
+  // NorCal
+  "fern-canyon": 4,
+  "lassen-peak": 4,
+  "bumpass-hell": 4,
+  "lost-coast": 5,
+  "telescope-peak": 4,
+  // SoCal / desert
+  "mt-tam": 3,
+  "mt-diablo": 3,
+  "mt-baldy": 4,
+  "san-jacinto": 4,
+  "ryan-mountain": 4,
+  // Big Sur / Bay
+  alamere: 4,
+  "tomales-point": 4,
+  ewoldsen: 4,
+  "andrew-molera": 4,
+  smugglers: 4,
+  "high-peaks-pinnacles": 4,
+  // Thru-hike
+  pct: 5,
+
+  // ----- New batch -----
+  "mist-falls": 4,
+  "lakes-trail": 4,
+  "moro-rock": 4,
+  "tokopah-falls": 3,
+  "tom-dick-harry": 4,
+  "mcneil-point": 5,
+  "tamanawas-falls": 3,
+  "cooper-spur": 5,
+  "cinder-cone": 4,
+  "hidden-valley": 4,
+  "lost-palms-oasis": 4,
+  "forty-nine-palms": 4,
+  "kendall-katwalk": 5,
+  "cutthroat-pass": 5,
+  "marymere-falls": 3,
+  "lake-22": 4,
+  "chain-lakes": 5,
+  "eaton-canyon": 2,
+  "solstice-canyon": 3,
+  "mt-st-helens": 5,
+  "mission-peak": 2,
+  "point-lobos": 5,
+  "pfeiffer-falls": 3,
+  "mt-scott-crater": 5,
+  "angels-rest": 4,
+};
+
+/** Endpoint coordinates for the few genuinely point-to-point trails. Loops
+ *  and out-and-backs return to `trailhead` and stay unset. */
+const ENDPOINT_BY_ID: Record<string, { lat: number; lng: number; name: string }> = {
+  jmt: { lat: 36.5785, lng: -118.2923, name: "Mt Whitney summit" },
+  pct: { lat: 49.0008, lng: -120.7717, name: "Manning Park, BC (Northern Terminus)" },
+  "lost-coast": { lat: 40.0223, lng: -124.0717, name: "Black Sands Beach" },
+};
+
+const RAW_TRAILS: Omit<Trail, "popularity" | "scenery">[] = [
   // ========== Yosemite + High Sierra ==========
   {
     id: "half-dome",
@@ -990,11 +1118,538 @@ const RAW_TRAILS: Omit<Trail, "popularity">[] = [
       "Seattle's training-mountain-of-record. A relentless forested climb 30 minutes from downtown, ending at a haystack summit overlooking the Snoqualmie Valley.",
     highlights: ["Seattle skyline view", "Cascades to Olympic panorama", "Year-round access"],
   },
+
+  // ========== Sequoia + Kings Canyon ==========
+  {
+    id: "mist-falls",
+    name: "Mist Falls",
+    region: "yosemite-sierra",
+    state: "CA",
+    parkUnit: "Kings Canyon National Park",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 8.0,
+    elevationGainFt: 800,
+    trailhead: { lat: 36.7949, lng: -118.5833, name: "Roads End" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "A long flat walk through Paradise Valley along the Kings River, climaxing at a thunderous 100-ft cataract that throws spray across the trail in early summer.",
+    highlights: ["Kings River canyon", "100-ft Mist Falls", "Granite domes overhead"],
+    parking:
+      "Roads End trailhead lot at the eastern terminus of Highway 180. Park entrance fee $35/vehicle (7 days). Lot fills by 9 a.m. summer weekends; arrive early or take the free Cedar Grove shuttle.",
+  },
+  {
+    id: "lakes-trail",
+    name: "Lakes Trail to Pear Lake",
+    region: "yosemite-sierra",
+    state: "CA",
+    parkUnit: "Sequoia National Park",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 12.6,
+    elevationGainFt: 2500,
+    trailhead: { lat: 36.5969, lng: -118.7283, name: "Wolverton" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "A high-Sierra classic from Wolverton up the Watchtower cliff to a chain of cirque lakes — Heather, Aster, Emerald, finally Pear — set under granite walls.",
+    highlights: ["Watchtower cliff edge", "Four cirque lakes", "Pear Lake granite bowl"],
+    parking:
+      "Wolverton parking lot off Generals Highway. Park entrance fee $35/vehicle (7 days). Plenty of capacity but the road closes seasonally — typically Nov–May with snow.",
+  },
+  {
+    id: "moro-rock",
+    name: "Moro Rock",
+    region: "yosemite-sierra",
+    state: "CA",
+    parkUnit: "Sequoia National Park",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 0.5,
+    elevationGainFt: 300,
+    trailhead: { lat: 36.547, lng: -118.7656, name: "Moro Rock parking" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "A 350-step staircase carved into a granite dome, leading to a vertiginous 6,725-ft summit with the Great Western Divide spread out to the east.",
+    highlights: ["Carved stone staircase", "Great Western Divide panorama", "Sunset hike favorite"],
+    parking:
+      "Small lot at the base of the dome, off Crescent Meadow Road. In summer (late May–Sept) the road is closed to private vehicles 9–4; use the free shuttle from Giant Forest Museum.",
+  },
+  {
+    id: "tokopah-falls",
+    name: "Tokopah Falls",
+    region: "yosemite-sierra",
+    state: "CA",
+    parkUnit: "Sequoia National Park",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "subalpine",
+    lengthMiles: 4.0,
+    elevationGainFt: 600,
+    trailhead: { lat: 36.6041, lng: -118.7314, name: "Lodgepole Campground" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer"],
+    description:
+      "Follow the Marble Fork through pine forest to the foot of a 1,200-ft cascade tumbling off a granite headwall — peak flow late May through June.",
+    highlights: ["Marble Fork canyon", "1,200-ft Tokopah Falls", "Marmots in the talus"],
+    parking:
+      "Lodgepole Campground day-use lot. Park entrance fee $35/vehicle. Walk through the campground to the trailhead at the river bridge.",
+  },
+
+  // ========== Mt Hood + Oregon Cascades ==========
+  {
+    id: "tom-dick-harry",
+    name: "Tom, Dick & Harry Mountain",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Mt Hood National Forest",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "subalpine",
+    lengthMiles: 7.2,
+    elevationGainFt: 1750,
+    trailhead: { lat: 45.3001, lng: -121.7758, name: "Mirror Lake trailhead" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "Past Mirror Lake's iconic Mt Hood reflection, then up a forested ridge to a three-summit traverse with the volcano filling the eastern sky.",
+    highlights: ["Mirror Lake reflection", "Mt Hood face-on view", "Three rocky summits"],
+    parking:
+      "Mirror Lake Trailhead lot off Highway 26. Northwest Forest Pass required ($5/day or $30/year). Lot fills by 9 a.m. weekends — overflow parking 0.3 mi east.",
+  },
+  {
+    id: "mcneil-point",
+    name: "McNeil Point",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Mt Hood National Forest",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 9.0,
+    elevationGainFt: 2400,
+    trailhead: { lat: 45.4054, lng: -121.7866, name: "Top Spur trailhead" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "From the Top Spur trailhead, climb meadows of avalanche lily and lupine to a stone shelter at 6,100 ft, perched on Mt Hood's northwest shoulder above the Sandy Glacier.",
+    highlights: ["Bald Mountain meadows", "CCC stone shelter", "Sandy Glacier overlook"],
+    parking:
+      "Top Spur trailhead lot at the end of FS Road 1828, gravel and rough — sedans manage in dry weather. Northwest Forest Pass required. Holds about 15 cars; fills by 8 a.m. summer weekends.",
+  },
+  {
+    id: "tamanawas-falls",
+    name: "Tamanawas Falls",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Mt Hood National Forest",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "rainforest",
+    lengthMiles: 3.6,
+    elevationGainFt: 500,
+    trailhead: { lat: 45.3987, lng: -121.5729, name: "Highway 35 pullout" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "A gentle forest walk along Cold Spring Creek to the base of a wide 110-ft curtain of water — you can scramble behind the falls when flow is moderate.",
+    highlights: ["Cold Spring Creek", "Walk behind the falls", "Old-growth forest"],
+    parking:
+      "Roadside pullout on Highway 35, mile 73 (across from Sherwood Campground). Free, no pass required. Holds about 25 cars.",
+  },
+  {
+    id: "cooper-spur",
+    name: "Cooper Spur",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Mt Hood National Forest",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 7.0,
+    elevationGainFt: 2800,
+    trailhead: { lat: 45.4044, lng: -121.6829, name: "Cloud Cap Saddle" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "The highest non-technical hike on Mt Hood — climb the volcano's northeast shoulder to 8,500 ft with the Eliot Glacier breaking off below your boots.",
+    highlights: ["Tilly Jane shelter", "Eliot Glacier crevasses", "8,500-ft turnaround stone"],
+    parking:
+      "Cloud Cap Saddle trailhead at the end of FS Road 3512, a dirt washboard — 25 minutes slow drive from Highway 35. Northwest Forest Pass required. Closes with first snow (Oct–June).",
+  },
+
+  // ========== Mt Lassen ==========
+  {
+    id: "cinder-cone",
+    name: "Cinder Cone Trail",
+    region: "norcal",
+    state: "CA",
+    parkUnit: "Lassen Volcanic National Park",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "volcanic",
+    lengthMiles: 4.0,
+    elevationGainFt: 850,
+    trailhead: { lat: 40.5544, lng: -121.2935, name: "Butte Lake" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "Slog up the loose ash side of a perfect 700-ft cinder cone, then circle the rim above the multicolored Painted Dunes and the Fantastic Lava Beds.",
+    highlights: ["Painted Dunes overlook", "Fantastic Lava Beds", "Two crater rims to walk"],
+    parking:
+      "Butte Lake Campground day-use lot, end of FS Road 32N21 (6 mi gravel from Highway 44). Park entrance fee $30/vehicle. Holds 30+ cars, rarely full.",
+  },
+
+  // ========== Joshua Tree + SoCal Desert ==========
+  {
+    id: "hidden-valley",
+    name: "Hidden Valley Loop",
+    region: "socal-desert",
+    state: "CA",
+    parkUnit: "Joshua Tree National Park",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "desert",
+    lengthMiles: 1.0,
+    elevationGainFt: 100,
+    trailhead: { lat: 33.9979, lng: -116.1683, name: "Hidden Valley picnic area" },
+    permitRequired: false,
+    bestSeasons: ["fall", "winter", "spring"],
+    description:
+      "The classic introduction to Joshua Tree's monzogranite rockscape: a cattle-rustler's hideout enclosed by 100-ft boulder walls, threaded with bouldering problems.",
+    highlights: ["Monzogranite boulder amphitheater", "World-class bouldering", "Joshua tree forest"],
+    parking:
+      "Hidden Valley picnic area lot off Park Boulevard. Park entrance fee $30/vehicle (7 days). Fills 9–noon on cool-season weekends; arrive early or after 2 p.m.",
+  },
+  {
+    id: "lost-palms-oasis",
+    name: "Lost Palms Oasis",
+    region: "socal-desert",
+    state: "CA",
+    parkUnit: "Joshua Tree National Park",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "desert",
+    lengthMiles: 7.5,
+    elevationGainFt: 1000,
+    trailhead: { lat: 33.7332, lng: -115.8049, name: "Cottonwood Spring" },
+    permitRequired: false,
+    bestSeasons: ["fall", "winter", "spring"],
+    description:
+      "Out through Colorado-desert washes and rocky ridges to a hidden canyon where the largest grove of native California fan palms in the park clings to a seep.",
+    highlights: ["Cottonwood Spring oasis", "70+ native palms in canyon", "Rare desert bighorn sightings"],
+    parking:
+      "Cottonwood Spring day-use lot at the south entrance (off I-10). Park entrance fee $30/vehicle. Plenty of capacity year-round.",
+  },
+  {
+    id: "forty-nine-palms",
+    name: "49 Palms Oasis",
+    region: "socal-desert",
+    state: "CA",
+    parkUnit: "Joshua Tree National Park",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "desert",
+    lengthMiles: 3.0,
+    elevationGainFt: 750,
+    trailhead: { lat: 34.1144, lng: -116.1268, name: "49 Palms trailhead" },
+    permitRequired: false,
+    bestSeasons: ["fall", "winter", "spring"],
+    description:
+      "A stiff up-and-over the desert ridge from the Twentynine Palms suburbs, ending at a fan-palm oasis fed by a spring at the head of a rocky canyon.",
+    highlights: ["Mojave-to-Colorado desert transition", "Fan palm grove", "Bighorn sheep tracks"],
+    parking:
+      "Small trailhead lot at the end of Canyon Road (off Highway 62 in Twentynine Palms). Free — outside the park entrance gate. Holds 20 cars; fills by 9 a.m. weekends.",
+  },
+
+  // ========== North Cascades east ==========
+  {
+    id: "kendall-katwalk",
+    name: "Kendall Katwalk via PCT",
+    region: "north-cascades",
+    state: "WA",
+    parkUnit: "Mt Baker–Snoqualmie National Forest",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "subalpine",
+    lengthMiles: 12.0,
+    elevationGainFt: 2700,
+    trailhead: { lat: 47.4275, lng: -121.4133, name: "Snoqualmie Pass PCT trailhead" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "A long climb on the PCT to a literally chiseled traverse — the Katwalk — blasted out of a sheer granite face with the Cascades stacked behind you in every direction.",
+    highlights: ["Granite-blasted Katwalk traverse", "Kendall Peak ridgeline", "Heather meadows in late summer"],
+    parking:
+      "PCT trailhead lot off exit 52 of I-90 (Snoqualmie Pass). Northwest Forest Pass required ($5/day). Two large lots; fills by 8 a.m. summer weekends.",
+  },
+  {
+    id: "cutthroat-pass",
+    name: "Cutthroat Pass via PCT",
+    region: "north-cascades",
+    state: "WA",
+    parkUnit: "Okanogan-Wenatchee National Forest",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 10.0,
+    elevationGainFt: 2000,
+    trailhead: { lat: 48.5832, lng: -120.7374, name: "Rainy Pass PCT trailhead" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "Switchback up through old-growth larch and silver fir to a pass with the eastern North Cascades unrolling east — at peak in late September, a sea of golden alpine larch.",
+    highlights: ["Golden alpine larch end of Sept", "Cutthroat Peak granite spire", "Methow valley view"],
+    parking:
+      "Rainy Pass PCT lot on Highway 20 (mile 158). Northwest Forest Pass required. Highway closed in winter (typ. mid-Nov to mid-Apr).",
+  },
+
+  // ========== Olympic ==========
+  {
+    id: "marymere-falls",
+    name: "Marymere Falls",
+    region: "olympic",
+    state: "WA",
+    parkUnit: "Olympic National Park",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "rainforest",
+    lengthMiles: 1.8,
+    elevationGainFt: 400,
+    trailhead: { lat: 48.0581, lng: -123.7929, name: "Storm King Ranger Station" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "The easiest waterfall hike in Olympic — a flat walk through old-growth fir along Lake Crescent to a 90-ft cascade splashing into a fern-walled grotto.",
+    highlights: ["Old-growth Douglas fir", "90-ft Marymere Falls", "Lake Crescent shore"],
+    parking:
+      "Storm King Ranger Station lot off Highway 101 at Lake Crescent. Park entrance fee $30/vehicle (7 days). Holds 50+ cars; rarely fills.",
+  },
+
+  // ========== Mt Baker / Cascades extras ==========
+  {
+    id: "lake-22",
+    name: "Lake Twenty-Two",
+    region: "north-cascades",
+    state: "WA",
+    parkUnit: "Mt Baker–Snoqualmie National Forest",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "rainforest",
+    lengthMiles: 5.4,
+    elevationGainFt: 1350,
+    trailhead: { lat: 48.0764, lng: -121.7456, name: "Lake 22 trailhead" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "A switchback climb through ancient cedar and Douglas fir to a glacial cirque lake at the foot of Mt Pilchuck's south face — talus, waterfalls, the works.",
+    highlights: ["Old-growth cedars", "Cirque lake against Pilchuck cliffs", "Waterfall braid on the climb"],
+    parking:
+      "Trailhead lot off Mountain Loop Highway, 13 mi east of Granite Falls. Northwest Forest Pass required. Holds 30 cars; fills by 8 a.m. summer weekends.",
+  },
+  {
+    id: "chain-lakes",
+    name: "Chain Lakes Loop",
+    region: "north-cascades",
+    state: "WA",
+    parkUnit: "Mt Baker–Snoqualmie National Forest",
+    difficulty: "hard",
+    type: "day",
+    ecosystem: "alpine",
+    lengthMiles: 7.0,
+    elevationGainFt: 1900,
+    trailhead: { lat: 48.8467, lng: -121.6918, name: "Artist Point" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "Mt Baker on one side, Mt Shuksan on the other, and a string of four alpine lakes between them — heathered ridges, blueberry slopes, and one of the densest mountain views in the Cascades.",
+    highlights: ["Mt Baker + Mt Shuksan in one frame", "Four alpine lakes", "Heather meadows turn red in late September"],
+    parking:
+      "Artist Point lot at the end of Highway 542 (Mt Baker Highway). Free. Snowbound until mid-July most years; lot opens late July–Sept.",
+  },
+
+  // ========== SoCal coastal & San Gabriels ==========
+  {
+    id: "eaton-canyon",
+    name: "Eaton Canyon Falls",
+    region: "socal-desert",
+    state: "CA",
+    parkUnit: "Eaton Canyon Natural Area / Angeles NF",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "chaparral",
+    lengthMiles: 3.5,
+    elevationGainFt: 400,
+    trailhead: { lat: 34.1789, lng: -118.0972, name: "Eaton Canyon Nature Center" },
+    permitRequired: false,
+    bestSeasons: ["winter", "spring"],
+    description:
+      "An LA-classic family hike up a sandy wash to a 40-ft waterfall in a shaded slot. Easy, scrambly, and cool even in summer once the canyon narrows.",
+    highlights: ["Chaparral wildflower spring", "40-ft First Falls", "Stream crossings"],
+    parking:
+      "Eaton Canyon Nature Center lot off Altadena Drive. Free. Holds 80 cars; fills by 9 a.m. on weekends — overflow parks along New York Drive.",
+  },
+  {
+    id: "solstice-canyon",
+    name: "Solstice Canyon",
+    region: "socal-desert",
+    state: "CA",
+    parkUnit: "Santa Monica Mountains National Recreation Area",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "chaparral",
+    lengthMiles: 3.0,
+    elevationGainFt: 500,
+    trailhead: { lat: 34.0386, lng: -118.7383, name: "Solstice Canyon trailhead" },
+    permitRequired: false,
+    bestSeasons: ["winter", "spring", "fall"],
+    description:
+      "A shaded sycamore canyon north of Malibu ending at the burned-out Roberts Ranch — stone foundations, a tropical garden gone feral, and a small year-round waterfall.",
+    highlights: ["Burned ranch ruins", "Sycamore-shaded creek", "Year-round trickling falls"],
+    parking:
+      "NPS lot at the trailhead off Corral Canyon Road. Free. Holds 60 cars; fills weekends 10–2.",
+  },
+
+  // ========== Mt St Helens ==========
+  {
+    id: "mt-st-helens",
+    name: "Mt St Helens via Monitor Ridge",
+    region: "rainier",
+    state: "WA",
+    parkUnit: "Mount St Helens National Volcanic Monument",
+    difficulty: "extreme",
+    type: "day",
+    ecosystem: "volcanic",
+    lengthMiles: 10.0,
+    elevationGainFt: 4500,
+    trailhead: { lat: 46.1551, lng: -122.1818, name: "Climbers' Bivouac" },
+    permitRequired: true,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "A non-technical scramble up volcanic ash and house-sized boulders to the southern crater rim, where you stand 1,300 ft above the lava dome inside the 1980 blast amphitheater.",
+    highlights: ["Stand on the crater rim", "View into the steaming dome", "Mt Adams + Mt Hood + Mt Rainier from the summit"],
+    parking:
+      "Climbers' Bivouac at the end of FS Road 830 (last 3 mi gravel). Climbing permit required Apr–Oct (mtsthelenspermit.com); 100/day, lottery in spring. NW Forest Pass for parking.",
+  },
+
+  // ========== Bay Area + Big Sur extras ==========
+  {
+    id: "mission-peak",
+    name: "Mission Peak",
+    region: "bigsur-bay",
+    state: "CA",
+    parkUnit: "Mission Peak Regional Preserve",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "chaparral",
+    lengthMiles: 6.0,
+    elevationGainFt: 2150,
+    trailhead: { lat: 37.5119, lng: -121.9105, name: "Stanford Ave staging area" },
+    permitRequired: false,
+    bestSeasons: ["winter", "spring", "fall"],
+    description:
+      "South Bay's training mountain — a steep, exposed grunt up the western flank to the iconic 2,517-ft summit pole, with a 360° view from Mt Tam to Mt Hamilton on a clear day.",
+    highlights: ["Iconic summit selfie pole", "South Bay 360° panorama", "Sunrise hike favorite"],
+    parking:
+      "Stanford Avenue staging area in Fremont. Free but residential — strictly enforced 2-hour limits on side streets. Lot fills by 7 a.m. weekends; the Ohlone College trailhead is the calmer alternative.",
+  },
+  {
+    id: "point-lobos",
+    name: "Point Lobos Perimeter",
+    region: "bigsur-bay",
+    state: "CA",
+    parkUnit: "Point Lobos State Natural Reserve",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "coastal",
+    lengthMiles: 6.0,
+    elevationGainFt: 600,
+    trailhead: { lat: 36.5217, lng: -121.9367, name: "Point Lobos main entrance" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall", "winter"],
+    description:
+      "Stitch together North Shore, Cypress Grove, and South Shore trails for a perimeter of California's most photographed headland — sea otters, harbor seals, and the only naturally-occurring Monterey cypress grove on earth.",
+    highlights: ["Cypress Grove twisted cypresses", "Sea Lion Point", "Bird Island gray-whale watching"],
+    parking:
+      "Main entrance lot off Highway 1, $10/vehicle day-use. Capacity is rationed — once full, cars are metered one-out / one-in. Avoid arrival 11–2 weekends.",
+  },
+  {
+    id: "pfeiffer-falls",
+    name: "Pfeiffer Falls & Valley View",
+    region: "bigsur-bay",
+    state: "CA",
+    parkUnit: "Pfeiffer Big Sur State Park",
+    difficulty: "easy",
+    type: "day",
+    ecosystem: "redwood",
+    lengthMiles: 2.0,
+    elevationGainFt: 400,
+    trailhead: { lat: 36.2488, lng: -121.7878, name: "Pfeiffer Big Sur day-use" },
+    permitRequired: false,
+    bestSeasons: ["spring", "fall", "winter"],
+    description:
+      "A short loop into a redwood-shaded canyon, past a 60-ft waterfall, then up to the Valley View overlook framing the Big Sur River valley meeting the Pacific.",
+    highlights: ["60-ft Pfeiffer Falls", "Old-growth redwood grove", "Valley-to-ocean overlook"],
+    parking:
+      "Pfeiffer Big Sur State Park day-use lot off Highway 1, $10/vehicle. Reopened 2021 after fire/flood reroute. Holds 70 cars; fills 10 a.m.–3 p.m. summer weekends.",
+  },
+
+  // ========== Crater Lake + central Oregon ==========
+  {
+    id: "mt-scott-crater",
+    name: "Mount Scott (Crater Lake)",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Crater Lake National Park",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "volcanic",
+    lengthMiles: 4.4,
+    elevationGainFt: 1250,
+    trailhead: { lat: 42.9285, lng: -122.0181, name: "Mt Scott trailhead" },
+    permitRequired: false,
+    bestSeasons: ["summer", "fall"],
+    description:
+      "The highest point in Crater Lake NP at 8,929 ft — switchbacks across an open volcanic ridge to a fire lookout that floats above the entire caldera and the lake's deepest blue.",
+    highlights: ["Highest point in the park", "Top-down view of Crater Lake", "Working CCC fire lookout"],
+    parking:
+      "Roadside pullout on East Rim Drive, mile 17 from Park HQ. Park entrance fee $30/vehicle. Rim Drive opens late June–Oct depending on snow.",
+  },
+
+  // ========== Columbia Gorge ==========
+  {
+    id: "angels-rest",
+    name: "Angel's Rest",
+    region: "oregon",
+    state: "OR",
+    parkUnit: "Columbia River Gorge National Scenic Area",
+    difficulty: "moderate",
+    type: "day",
+    ecosystem: "gorge",
+    lengthMiles: 4.5,
+    elevationGainFt: 1500,
+    trailhead: { lat: 45.561, lng: -122.1664, name: "Angel's Rest trailhead" },
+    permitRequired: false,
+    bestSeasons: ["spring", "summer", "fall"],
+    description:
+      "A steep workout up the gorge wall to a basalt prow jutting over the Columbia River — the closest wow-view from Portland and a regenerating after-burn forest from the 2017 Eagle Creek fire.",
+    highlights: ["Coopey Falls early on the trail", "Basalt prow viewpoint", "Recovering post-fire forest"],
+    parking:
+      "Trailhead pullouts along Historic Columbia River Highway near mile 28. Free. Small lots — fills by 8 a.m. weekends; arrive early or use Bridal Veil overflow.",
+  },
 ];
 
 export const TRAILS: Trail[] = RAW_TRAILS.map((t) => ({
   ...t,
   popularity: POPULARITY_BY_ID[t.id] ?? "steady",
+  scenery: SCENERY_BY_ID[t.id] ?? 3,
+  // Inline `endpoint` on the entry (if any) wins; otherwise use the side-map
+  endpoint: t.endpoint ?? ENDPOINT_BY_ID[t.id],
 }));
 
 export const TRAIL_BY_ID = Object.fromEntries(TRAILS.map((t) => [t.id, t])) as Record<string, Trail>;

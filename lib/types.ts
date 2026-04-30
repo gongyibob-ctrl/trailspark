@@ -40,6 +40,11 @@ export const POPULARITY_COLOR: Record<Popularity, string> = {
   backcountry: "#8b5cf6", // violet — wilderness, mystery
 };
 
+/** Scenery rating, 1 (pleasant but not memorable) to 5 (legendary —
+ *  bucket-list scenery you'll remember for years). Calibrated for the
+ *  curated West Coast set, where even a 3 is a strong hike anywhere else. */
+export type Scenery = 1 | 2 | 3 | 4 | 5;
+
 export interface Trail {
   id: string;
   name: string;
@@ -51,12 +56,20 @@ export interface Trail {
   ecosystem: Ecosystem;
   lengthMiles: number;
   elevationGainFt: number;
-  trailhead: { lat: number; lng: number };
+  /** Where the route starts. `name` is a short label like "Happy Isles". */
+  trailhead: { lat: number; lng: number; name?: string };
+  /** Set only for point-to-point routes (JMT, PCT, Lost Coast, etc.).
+   *  Loops and out-and-backs return to `trailhead`, so this stays unset. */
+  endpoint?: { lat: number; lng: number; name?: string };
   permitRequired: boolean;
   bestSeasons: Season[];
   popularity: Popularity;
+  scenery: Scenery;
   description: string;
   highlights: string[];
+  /** Short note about driving access / parking lot / fees. English only;
+   *  Chinese override lives in `TRAILS_ZH[id].parking`. */
+  parking?: string;
   externalUrl?: string;
 }
 

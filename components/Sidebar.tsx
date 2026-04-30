@@ -19,9 +19,8 @@ import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, pickLocalized, type StringKey } from "@/lib/i18n";
 import { TRAILS_ZH } from "@/lib/trails-zh";
 import { haversineKm } from "@/lib/geo";
+import { SceneryStars } from "./Section";
 import clsx from "clsx";
-
-const KM_TO_MI = 0.621371;
 
 interface SidebarProps {
   trails: Trail[];
@@ -72,6 +71,18 @@ export default function Sidebar({
       return true;
     });
   }, [trails, query, regions, difficulties, types, popularities, favoritesOnly, favorites]);
+
+  // Distances are recomputed only when the position or filtered set changes —
+  // not on every keystroke or favorites toggle.
+  const distancesById = useMemo<Record<string, number> | null>(() => {
+    if (!userPosition) return null;
+    const u: [number, number] = [userPosition.lng, userPosition.lat];
+    const out: Record<string, number> = {};
+    for (const tr of filtered) {
+      out[tr.id] = haversineKm(u, [tr.trailhead.lng, tr.trailhead.lat]);
+    }
+    return out;
+  }, [filtered, userPosition?.lat, userPosition?.lng]);
 
   // notify parent when filtered list changes
   useEffect(() => {
@@ -287,14 +298,7 @@ export default function Sidebar({
                 onClick={() => onSelect(t.id)}
                 onToggleFavorite={() => toggleFavorite(t.id)}
                 index={i}
-                distanceKm={
-                  userPosition
-                    ? haversineKm(
-                        [userPosition.lng, userPosition.lat],
-                        [t.trailhead.lng, t.trailhead.lat],
-                      )
-                    : null
-                }
+                distanceKm={distancesById?.[t.id] ?? null}
               />
             ))}
           </ul>
@@ -384,17 +388,10 @@ function TrailCard({
   index: number;
   distanceKm: number | null;
 }) {
-  const { locale, t, fmtDistance, fmtElevation } = useLocale();
+  const { locale, t, fmtDistance, fmtElevation, fmtDistanceFromKm } = useLocale();
   const parkUnitLabel = pickLocalized(locale, TRAILS_ZH[trail.id]?.parkUnit, trail.parkUnit);
   const distanceLabel =
-    distanceKm == null
-      ? null
-      : (() => {
-          const value = locale === "zh" ? distanceKm : distanceKm * KM_TO_MI;
-          const unit = locale === "zh" ? "公里" : "mi";
-          const n = value < 10 ? value.toFixed(1) : Math.round(value).toString();
-          return t("locate.away", { n: `${n} ${unit}` });
-        })();
+    distanceKm == null ? null : t("locate.away", { n: fmtDistanceFromKm(distanceKm) });
   return (
     <li
       className="animate-rise"
@@ -436,7 +433,7 @@ function TrailCard({
                   </>
                 )}
               </div>
-              <div className="mt-1.5">
+              <div className="mt-1.5 flex items-center gap-2">
                 <span
                   className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-wider"
                   style={{
@@ -447,6 +444,7 @@ function TrailCard({
                 >
                   {t(`popularity.${trail.popularity}` as StringKey)}
                 </span>
+                <SceneryStars n={trail.scenery} title={t(`scenery.${trail.scenery}` as StringKey)} />
               </div>
             </div>
           </div>

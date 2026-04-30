@@ -23,7 +23,7 @@ import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
-import { Section, Stat } from "./Section";
+import { Section, SceneryStars, Stat } from "./Section";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
 import { POI_ICON, POI_TONE, pickPoiName } from "@/lib/poi-icons";
 import { getAdvisoriesForDate, type SeasonalAdvisory } from "@/lib/seasonal";
@@ -227,6 +227,15 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
               {t("detail.permitRequired")}
             </Badge>
           )}
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-100"
+            title={t(`scenery.${trail.scenery}` as StringKey)}
+          >
+            <SceneryStars n={trail.scenery} size="sm" />
+            <span className="text-[10px] text-amber-200/85">
+              {t(`scenery.${trail.scenery}` as StringKey)}
+            </span>
+          </span>
         </div>
       </div>
 
@@ -253,6 +262,9 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         <Section title={t("section.about")} accent="neutral" delay={1}>
           <p className="text-[13.5px] leading-relaxed text-white/80">{trailDescription}</p>
         </Section>
+
+        {/* Driving access / parking */}
+        <AccessSection trail={trail} />
 
         {/* Permit info — only when this trail needs a permit */}
         {trail.permitRequired && getPermitInfo(trail.id) && (
@@ -1174,6 +1186,83 @@ function GearRow({
         </div>
       </button>
     </li>
+  );
+}
+
+function AccessSection({ trail }: { trail: Trail }) {
+  const { t, locale } = useLocale();
+  const zh = TRAILS_ZH[trail.id];
+  const parking = pickLocalized(locale, zh?.parking, trail.parking);
+
+  return (
+    <Section title={t("access.heading")} accent="blue" delay={1.2}>
+      <div className="space-y-2.5">
+        <AccessRow
+          label={t("access.start")}
+          name={trail.trailhead.name}
+          lat={trail.trailhead.lat}
+          lng={trail.trailhead.lng}
+        />
+        {trail.endpoint ? (
+          <AccessRow
+            label={t("access.end")}
+            name={trail.endpoint.name}
+            lat={trail.endpoint.lat}
+            lng={trail.endpoint.lng}
+          />
+        ) : (
+          <div className="pl-[60px] text-[10.5px] italic text-white/40">
+            {t("access.returnsToStart")}
+          </div>
+        )}
+        <div className="border-t border-white/8 pt-2.5 text-[12px] leading-relaxed text-white/70">
+          <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+            {t("access.parking")}
+          </span>
+          {parking ?? <span className="italic text-white/45">{t("access.parkingFallback")}</span>}
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+function AccessRow({
+  label,
+  name,
+  lat,
+  lng,
+}: {
+  label: string;
+  name?: string;
+  lat: number;
+  lng: number;
+}) {
+  const { t } = useLocale();
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+  return (
+    <div className="flex items-center gap-3 text-[12.5px]">
+      <span className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-white/85">{name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</div>
+        {name && (
+          <div className="font-mono text-[10px] text-white/40">
+            {lat.toFixed(4)}, {lng.toFixed(4)}
+          </div>
+        )}
+      </div>
+      <a
+        href={directionsUrl}
+        target="_blank"
+        rel="noopener"
+        className="group inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-500/15 px-2 py-1 text-[11px] font-medium text-blue-200 ring-1 ring-blue-400/30 transition hover:bg-blue-500/25 hover:text-white"
+      >
+        <MapPin className="h-3 w-3" />
+        {t("access.openInMaps")}
+        <ExternalLink className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      </a>
+    </div>
   );
 }
 

@@ -43,12 +43,18 @@ export default function Page() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flyToId, setFlyToId] = useState<string | null>(null);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>(TRAILS);
-  // Sidebar starts collapsed on mobile so the map is visible first.
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => isMobileNow());
+  // Sidebar starts collapsed on mobile so the map is visible first. The
+  // initial value must match SSR (false) to avoid hydration mismatch; the
+  // effect below collapses it on mobile after mount.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [recenterTick, setRecenterTick] = useState(0);
   const { t } = useLocale();
   const { uploads, remove: removeUpload } = useUploads();
   const { position: userPosition, status: geoStatus, start: startGeo } = useGeolocation();
+
+  useEffect(() => {
+    if (isMobileNow()) setSidebarCollapsed(true);
+  }, []);
 
   useEffect(() => {
     const fromUrl = readTrailFromURL();
