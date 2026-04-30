@@ -183,7 +183,7 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
       </div>
 
       {/* Content scroll */}
-      <div className="flex-1 space-y-5 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 space-y-5 overflow-y-auto px-6 pb-6 pt-1">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 [&>*]:animate-rise" style={stagger(0)}>
           <Stat icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={`${trail.lengthMiles} mi`} />
@@ -388,8 +388,8 @@ function Badge({ className, children }: { className?: string; children: React.Re
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/[0.04] px-3 py-2 ring-1 ring-white/15">
-      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/50">
+    <div className="rounded-lg bg-black/35 px-3 py-2.5 ring-1 ring-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/60">
         {icon}
         {label}
       </div>
