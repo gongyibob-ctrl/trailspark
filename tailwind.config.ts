@@ -35,14 +35,14 @@ const config: Config = {
         display: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
       },
       animation: {
-        "fade-in": "fadeIn 0.3s ease-out",
-        "slide-up": "slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-        "slide-in-right": "slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-        "rise": "rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards",
-        "grow-y": "growY 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards",
+        "fade-in": "fadeIn 0.18s ease-out",
+        "slide-up": "slideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-in-right": "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        "rise": "rise 0.32s cubic-bezier(0.16, 1, 0.3, 1) backwards",
+        "grow-y": "growY 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards",
         "ping-soft": "pingSoft 2.4s cubic-bezier(0, 0, 0.2, 1) infinite",
         "shimmer": "shimmer 2s linear infinite",
-        "tick": "tick 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "tick": "tick 0.24s cubic-bezier(0.16, 1, 0.3, 1)",
       },
       keyframes: {
         fadeIn: {

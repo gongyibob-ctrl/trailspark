@@ -399,7 +399,7 @@ function TrailCard({
   return (
     <li
       className="animate-rise"
-      style={{ animationDelay: `${Math.min(index * 0.025, 0.4)}s` }}
+      style={{ animationDelay: `${Math.min(index * 0.015, 0.25)}s` }}
     >
       <div
         className={clsx(

@@ -632,7 +632,7 @@ export default function Map({
         mapRef.current.fitBounds(u.bounds, {
           padding: { top: 80, bottom: 80, left: 420, right: 500 },
           pitch: 30,
-          duration: 1500,
+          duration: 900,
           maxZoom: 14,
           essential: true,
         });
@@ -647,7 +647,7 @@ export default function Map({
         padding: { top: 80, bottom: 80, left: 420, right: 500 },
         pitch: 35,
         bearing: -8,
-        duration: 1700,
+        duration: 1050,
         maxZoom: 13,
         essential: true,
       });
@@ -657,7 +657,7 @@ export default function Map({
         zoom: 11,
         pitch: 50,
         bearing: -10,
-        duration: 1700,
+        duration: 1050,
         essential: true,
       });
     }
@@ -702,7 +702,7 @@ export default function Map({
     map.flyTo({
       center: [userPosition.lng, userPosition.lat],
       zoom: isFirstFix ? 10 : Math.max(map.getZoom(), 11),
-      duration: 1400,
+      duration: 900,
       essential: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

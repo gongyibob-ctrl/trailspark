@@ -32,7 +32,7 @@ export function Section({
   delay,
   flush = false,
 }: SectionProps) {
-  const style = delay != null ? { animationDelay: `${0.08 + delay * 0.07}s` } : undefined;
+  const style = delay != null ? { animationDelay: `${0.04 + delay * 0.04}s` } : undefined;
   return (
     <section
       className={clsx(
