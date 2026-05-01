@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TRAILS, TRAIL_BY_ID } from "@/lib/trails";
-import { TRAILS_ZH } from "@/lib/trails-zh";
 import { getPermitInfo } from "@/lib/permits";
 import { getTrailPOIs } from "@/lib/trail-pois";
-import { formatLatLng } from "@/lib/geo";
-
-const SITE_URL = "https://trailspark.xyz";
+import { formatLatLng, googleDirectionsUrl } from "@/lib/geo";
+import { SITE_URL, META_DESC_MAX } from "@/lib/site";
+import { DIFFICULTY_LABEL, TYPE_LABEL, SEASON_LABEL } from "@/lib/labels";
 
 interface RouteParams {
   params: { id: string };
@@ -22,7 +21,7 @@ export function generateMetadata({ params }: RouteParams): Metadata {
   if (!trail) return { title: "Trail not found" };
   const url = `${SITE_URL}/trails/${trail.id}`;
   const title = `${trail.name} — ${trail.parkUnit}`;
-  const description = `${trail.description.slice(0, 155).replace(/\s+\S*$/, "")}…`;
+  const description = `${trail.description.slice(0, META_DESC_MAX).replace(/\s+\S*$/, "")}…`;
   return {
     title,
     description,
@@ -43,17 +42,13 @@ export function generateMetadata({ params }: RouteParams): Metadata {
   };
 }
 
-const DIFFICULTY_LABEL = { easy: "Easy", moderate: "Moderate", hard: "Hard", extreme: "Extreme" } as const;
-const TYPE_LABEL = { day: "Day hike", "multi-day": "Multi-day backpack", "thru-hike": "Thru-hike" } as const;
-const SEASON_LABEL = { spring: "Spring", summer: "Summer", fall: "Fall", winter: "Winter" } as const;
-
 export default function TrailPage({ params }: RouteParams) {
   const trail = TRAIL_BY_ID[params.id];
   if (!trail) notFound();
   const url = `${SITE_URL}/trails/${trail.id}`;
   const pois = getTrailPOIs(trail.id);
   const permit = trail.permitRequired ? getPermitInfo(trail.id) : null;
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${trail.trailhead.lat},${trail.trailhead.lng}&travelmode=driving`;
+  const directionsUrl = googleDirectionsUrl(trail.trailhead.lat, trail.trailhead.lng);
 
   // TouristAttraction is the most search-friendly schema for hiking trails.
   // Includes geo, address-by-region, and a description that Google may
@@ -88,14 +83,6 @@ export default function TrailPage({ params }: RouteParams) {
       { "@type": "PropertyValue", name: "Best Seasons", value: trail.bestSeasons.map((s) => SEASON_LABEL[s]).join(", ") },
       { "@type": "PropertyValue", name: "Scenery Rating", value: `${trail.scenery} / 5` },
     ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: trail.scenery,
-      bestRating: 5,
-      worstRating: 1,
-      ratingCount: 1,
-      reviewCount: 1,
-    },
   };
 
   const breadcrumbJsonLd = {

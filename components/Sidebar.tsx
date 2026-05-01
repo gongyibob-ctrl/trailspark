@@ -127,6 +127,8 @@ export default function Sidebar({
             <div className="text-base font-semibold tracking-tight text-white">Trailspark</div>
             <Link
               href="/trails"
+              prefetch={false}
+              aria-label="Browse all trails"
               className="block text-[11px] uppercase tracking-[0.14em] text-forest-200/70 transition-colors hover:text-forest-200"
             >
               {t("brand.tagline")} · {t("brand.trailsCount", { n: trails.length })}

@@ -23,7 +23,7 @@ import {
 import { useFavorites } from "@/lib/favorites";
 import type { Season, Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR, POPULARITY_COLOR } from "@/lib/types";
-import { formatLatLng } from "@/lib/geo";
+import { formatLatLng, googleDirectionsUrl } from "@/lib/geo";
 import { useLocale, formatPickedShort, pickLocalized, type StringKey } from "@/lib/i18n";
 import { Section, SceneryStars, Stat } from "./Section";
 import { getTrailPOIs, type POI } from "@/lib/trail-pois";
@@ -1242,7 +1242,7 @@ function AccessRow({
   lng: number;
 }) {
   const { t } = useLocale();
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+  const directionsUrl = googleDirectionsUrl(lat, lng);
   return (
     <div className="flex items-center gap-3 text-[12.5px]">
       <span className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-white/45">

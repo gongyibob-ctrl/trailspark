@@ -1,11 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
-
-const SITE_URL = "https://trailspark.xyz";
-const SITE_NAME = "Trailspark";
-const SITE_DESCRIPTION =
-  "An interactive map of 75 hand-curated hiking trails on the US West Coast — Yosemite, Mt Rainier, Olympic, Crater Lake, Joshua Tree and more. Real weather averages, gear lists by season, permit info, and elevation profiles.";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -9,6 +9,13 @@ export function formatLatLng(lat: number, lng: number): string {
   return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }
 
+/** Google Maps deep link to driving directions ending at the given point.
+ *  On mobile the Google Maps app intercepts the URL; on desktop the web
+ *  app opens. */
+export function googleDirectionsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+}
+
 export function haversineKm(a: [number, number], b: [number, number]): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b[1] - a[1]);

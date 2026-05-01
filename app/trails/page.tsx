@@ -2,20 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TRAILS } from "@/lib/trails";
 import type { Region } from "@/lib/types";
-
-const SITE_URL = "https://trailspark.xyz";
-
-const REGION_LABEL: Record<Region, string> = {
-  "yosemite-sierra": "Yosemite & High Sierra",
-  rainier: "Mt Rainier",
-  olympic: "Olympic",
-  "north-cascades": "North Cascades",
-  oregon: "Oregon",
-  norcal: "Northern California",
-  "socal-desert": "Southern California & Desert",
-  "bigsur-bay": "Big Sur & Bay Area",
-  "thru-hike": "Thru-hikes",
-};
+import { SITE_URL } from "@/lib/site";
+import { DIFFICULTY_LABEL, REGION_LABEL } from "@/lib/labels";
 
 const REGION_ORDER: Region[] = [
   "yosemite-sierra",
@@ -28,13 +16,6 @@ const REGION_ORDER: Region[] = [
   "socal-desert",
   "thru-hike",
 ];
-
-const DIFFICULTY_LABEL = {
-  easy: "Easy",
-  moderate: "Moderate",
-  hard: "Hard",
-  extreme: "Extreme",
-} as const;
 
 export const metadata: Metadata = {
   title: "All trails — directory of 75 West Coast hikes",

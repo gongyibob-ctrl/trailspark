@@ -148,6 +148,13 @@ const DIFFICULTY_COLOR_EXPR = [
   "#ffffff",
 ] as any;
 
+// Camera-fly durations. Tuned past the ~600ms disorientation floor; faster
+// felt jumpy in testing, slower felt sluggish on mobile.
+const FLY_DURATION_BOUNDS = 1050;
+const FLY_DURATION_POINT = 1050;
+const FLY_DURATION_USER_BOUNDS = 900;
+const FLY_DURATION_LOCATE = 900;
+
 export default function Map({
   trails,
   userTrails,
@@ -622,17 +629,15 @@ export default function Map({
     }
   }, [selectedId, geomVersion, locale]);
 
-  // fly to selected trail — fit to bounds if we have a line, else point fly-to
   useEffect(() => {
     if (!flyToId || !mapRef.current) return;
-    // User-uploaded trail
     if (flyToId.startsWith("user-")) {
       const u = userTrails.find((x) => x.id === flyToId);
       if (u) {
         mapRef.current.fitBounds(u.bounds, {
           padding: { top: 80, bottom: 80, left: 420, right: 500 },
           pitch: 30,
-          duration: 900,
+          duration: FLY_DURATION_USER_BOUNDS,
           maxZoom: 14,
           essential: true,
         });
@@ -647,7 +652,7 @@ export default function Map({
         padding: { top: 80, bottom: 80, left: 420, right: 500 },
         pitch: 35,
         bearing: -8,
-        duration: 1050,
+        duration: FLY_DURATION_BOUNDS,
         maxZoom: 13,
         essential: true,
       });
@@ -657,7 +662,7 @@ export default function Map({
         zoom: 11,
         pitch: 50,
         bearing: -10,
-        duration: 1050,
+        duration: FLY_DURATION_POINT,
         essential: true,
       });
     }
@@ -702,7 +707,7 @@ export default function Map({
     map.flyTo({
       center: [userPosition.lng, userPosition.lat],
       zoom: isFirstFix ? 10 : Math.max(map.getZoom(), 11),
-      duration: 900,
+      duration: FLY_DURATION_LOCATE,
       essential: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
