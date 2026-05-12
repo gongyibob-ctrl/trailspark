@@ -5,11 +5,17 @@ import { useState } from "react";
 interface Props {
   trailId: string;
   trailName: string;
+  /** "default" = SSR page placement (tall hero with explanation).
+   *  "compact" = in-app sidebar placement (smaller margins, denser copy). */
+  variant?: "default" | "compact";
 }
 
 type Status = "idle" | "sending" | "ok" | "error";
 
-export function TrailInquiryForm({ trailId, trailName }: Props) {
+export function TrailInquiryForm({ trailId, trailName, variant = "default" }: Props) {
+  const compact = variant === "compact";
+  const outerMargin = compact ? "my-3" : "my-10";
+  const innerPad    = compact ? "p-4"  : "p-6";
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [email, setEmail] = useState("");
@@ -43,9 +49,9 @@ export function TrailInquiryForm({ trailId, trailName }: Props) {
 
   if (status === "ok") {
     return (
-      <section className="my-10 rounded-2xl border border-forest-300/30 bg-forest-500/[0.08] p-6">
-        <h3 className="text-[16px] font-semibold text-forest-100">Got it — we'll be in touch within 24 hours.</h3>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-white/65">
+      <section className={`${outerMargin} rounded-2xl border border-forest-300/30 bg-forest-500/[0.08] ${innerPad}`}>
+        <h3 className="text-[15px] font-semibold text-forest-100">Got it — we'll be in touch within 24 hours.</h3>
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/65">
           Your custom plan for {trailName} is on the way. Reply to our email
           with any constraints (fitness, dates, budget) and we'll tune it.
         </p>
@@ -55,23 +61,25 @@ export function TrailInquiryForm({ trailId, trailName }: Props) {
 
   if (!open) {
     return (
-      <section className="my-10 rounded-2xl border border-forest-300/25 bg-gradient-to-br from-forest-500/[0.08] to-violet-500/[0.05] p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className={`${outerMargin} rounded-2xl border border-forest-300/25 bg-gradient-to-br from-forest-500/[0.08] to-violet-500/[0.05] ${innerPad}`}>
+        <div className={compact ? "space-y-2" : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"}>
           <div className="flex-1">
-            <h3 className="text-[17px] font-semibold text-white">
+            <h3 className={compact ? "text-[14px] font-semibold text-white" : "text-[17px] font-semibold text-white"}>
               Get a custom trip plan for {trailName}
             </h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/65">
-              Tell us when you're going. We'll hand-craft a day-by-day plan —
-              permits, parking, drives, gear — and reply within 24h.
+            <p className={compact ? "mt-0.5 text-[12px] leading-relaxed text-white/65" : "mt-1 text-[13px] leading-relaxed text-white/65"}>
+              Tell us when you're going. We hand-craft a day-by-day plan and reply within 24h.
             </p>
-            <p className="mt-2 text-[11px] uppercase tracking-wider text-forest-300/85">
+            <p className={compact ? "mt-1 text-[10px] uppercase tracking-wider text-forest-300/85" : "mt-2 text-[11px] uppercase tracking-wider text-forest-300/85"}>
               Free during beta
             </p>
           </div>
           <button
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-xl bg-forest-400 px-5 py-2.5 text-[14px] font-semibold text-black transition hover:bg-forest-300 sm:self-center"
+            className={compact
+              ? "w-full rounded-lg bg-forest-400 px-3 py-2 text-[13px] font-semibold text-black transition hover:bg-forest-300"
+              : "shrink-0 rounded-xl bg-forest-400 px-5 py-2.5 text-[14px] font-semibold text-black transition hover:bg-forest-300 sm:self-center"
+            }
           >
             Plan this trip →
           </button>
@@ -81,7 +89,7 @@ export function TrailInquiryForm({ trailId, trailName }: Props) {
   }
 
   return (
-    <section className="my-10 rounded-2xl border border-forest-300/30 bg-forest-500/[0.06] p-6">
+    <section className={`${outerMargin} rounded-2xl border border-forest-300/30 bg-forest-500/[0.06] ${innerPad}`}>
       <h3 className="text-[16px] font-semibold text-white">
         Plan a trip around {trailName}
       </h3>

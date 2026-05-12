@@ -52,6 +52,7 @@ import {
 } from "@/lib/dates";
 import DatePicker from "./DatePicker";
 import ElevationProfile from "./ElevationProfile";
+import { TrailInquiryForm } from "./TrailInquiryForm";
 import { recommendGear, groupByCategory, totalGrams, getGearTier, CATEGORY_LABEL, type GearCategory } from "@/lib/gear";
 import { CATEGORY_ICON, iconForGear } from "@/lib/gear-icons";
 import { localizeGear } from "@/lib/gear-zh";
@@ -287,6 +288,9 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
             </p>
           )}
         </Section>
+
+        {/* Plan-a-trip CTA — primary conversion in the in-app flow */}
+        <TrailInquiryForm trailId={trail.id} trailName={trail.name} variant="compact" />
 
         {/* Driving access / parking */}
         <AccessSection trail={trail} />

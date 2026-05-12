@@ -21,8 +21,9 @@ const TO   = process.env.INQUIRY_TO   ?? "gongyibob@gmail.com";
 const FROM = process.env.INQUIRY_FROM ?? "Trailspark Inquiries <onboarding@resend.dev>";
 
 interface InquiryBody {
-  trailId: string;
-  trailName: string;
+  /** Specific trail (from a /trails/[id] page) or "general-inquiry" (from the landing-page form). */
+  trailId?: string;
+  trailName?: string;
   email: string;
   dates?: string;
   groupSize?: string;
@@ -53,13 +54,14 @@ export async function POST(request: Request) {
   if (!body.email || !isEmail(body.email)) {
     return NextResponse.json({ error: "valid email required" }, { status: 400 });
   }
-  if (!body.trailId || !body.trailName) {
-    return NextResponse.json({ error: "trail context required" }, { status: 400 });
-  }
 
-  const subject  = `New trip inquiry: ${body.trailName}`;
+  // Trail context is optional — landing-page inquiries arrive without one.
+  const trailLabel = body.trailName ?? "General trip inquiry";
+  const trailIdLabel = body.trailId ?? "general-inquiry";
+
+  const subject  = `New trip inquiry: ${trailLabel}`;
   const text = [
-    `Trail:      ${body.trailName} (${body.trailId})`,
+    `Trail:      ${trailLabel} (${trailIdLabel})`,
     `User email: ${body.email}`,
     body.dates     ? `Dates:      ${body.dates}`     : null,
     body.groupSize ? `Group:      ${body.groupSize}` : null,
@@ -70,8 +72,8 @@ export async function POST(request: Request) {
 
   const html = `
     <h2>New trip inquiry</h2>
-    <p><strong>Trail:</strong> ${escapeHtml(body.trailName)}
-       <span style="color:#888">(${escapeHtml(body.trailId)})</span></p>
+    <p><strong>Trail:</strong> ${escapeHtml(trailLabel)}
+       <span style="color:#888">(${escapeHtml(trailIdLabel)})</span></p>
     <p><strong>From:</strong> <a href="mailto:${escapeHtml(body.email)}">${escapeHtml(body.email)}</a></p>
     ${body.dates     ? `<p><strong>Dates:</strong> ${escapeHtml(body.dates)}</p>`         : ""}
     ${body.groupSize ? `<p><strong>Group size:</strong> ${escapeHtml(body.groupSize)}</p>`: ""}
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
   `;
 
   // Always log — useful in dev and provides a paper trail in Vercel logs.
-  console.log(`[inquiry] ${body.email} → ${body.trailName} (${body.trailId})`);
+  console.log(`[inquiry] ${body.email} → ${trailLabel} (${trailIdLabel})`);
   if (body.dates)     console.log(`  dates: ${body.dates}`);
   if (body.groupSize) console.log(`  group: ${body.groupSize}`);
   if (body.notes)     console.log(`  notes: ${body.notes}`);

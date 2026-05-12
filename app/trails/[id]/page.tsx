@@ -255,7 +255,7 @@ export default function TrailPage({ params }: RouteParams) {
           elevation profile, and nearby points of interest.
         </p>
         <Link
-          href={`/?trail=${trail.id}`}
+          href={`/map?trail=${trail.id}`}
           className="mt-3 inline-block rounded-md bg-forest-500/40 px-4 py-2 text-[13px] font-semibold text-white ring-1 ring-forest-400/40 hover:bg-forest-500/55"
         >
           Open {trail.name} on the map →
@@ -263,8 +263,8 @@ export default function TrailPage({ params }: RouteParams) {
       </section>
 
       <footer className="border-t border-white/8 pt-6 text-[12px] text-white/40">
-        <Link href="/" className="hover:text-white/70">
-          ← Back to all 75 West Coast trails
+        <Link href="/trails" className="hover:text-white/70">
+          ← Back to all West Coast trails
         </Link>
       </footer>
     </main>

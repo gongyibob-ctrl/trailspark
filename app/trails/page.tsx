@@ -113,7 +113,7 @@ export default function TrailsIndex() {
       />
 
       <header className="mb-10">
-        <Link href="/" className="text-[12px] text-white/45 hover:text-white/75">
+        <Link href="/map" className="text-[12px] text-white/45 hover:text-white/75">
           ← Back to map
         </Link>
         <h1 className="mt-2 font-display text-4xl text-white">All trails</h1>
@@ -157,7 +157,7 @@ export default function TrailsIndex() {
       })}
 
       <footer className="mt-12 border-t border-white/8 pt-6 text-[12px] text-white/45">
-        <Link href="/" className="hover:text-white/75">
+        <Link href="/map" className="hover:text-white/75">
           ← Back to interactive map
         </Link>
       </footer>

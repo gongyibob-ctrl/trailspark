@@ -2,11 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
+import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Trailspark — Hiking Trail Map for the US West Coast",
+    default: "Trailspark — Custom hiking trip plans for the US West Coast",
     template: "%s · Trailspark",
   },
   description: SITE_DESCRIPTION,
@@ -51,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: "Trailspark — Hiking Trail Map for the US West Coast",
+    title: "Trailspark — Custom hiking trip plans for the US West Coast",
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     locale: "en_US",
@@ -59,7 +60,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trailspark — Hiking Trail Map for the US West Coast",
+    title: "Trailspark — Custom hiking trip plans for the US West Coast",
     description: SITE_DESCRIPTION,
   },
   category: "travel",
@@ -95,7 +96,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }
