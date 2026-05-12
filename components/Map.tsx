@@ -50,6 +50,7 @@ const USER_LINE_LAYER_SELECTED = "user-trail-line-selected";
 // Featured trails keep their HTML markers — only the 1,700+ imports are
 // aggregated so the West-Coast view doesn't drown in pins.
 const IMPORTED_SOURCE_ID  = "imported-trails";
+const IMPORTED_HALO_LAYER    = "imported-cluster-halo";
 const IMPORTED_CLUSTER_LAYER = "imported-clusters";
 const IMPORTED_COUNT_LAYER   = "imported-cluster-count";
 const IMPORTED_POINT_LAYER   = "imported-points";
@@ -486,7 +487,30 @@ export default function Map({
           clusterRadius: IMPORTED_CLUSTER_RADIUS,
         });
 
-        // Cluster bubbles — size + tone step up with count.
+        // Halo — soft glow underneath each cluster so the bubble feels
+        // grounded in the map instead of pasted on top. Larger radius +
+        // very low opacity + circle-blur creates atmospheric falloff.
+        map.addLayer({
+          id: IMPORTED_HALO_LAYER,
+          type: "circle",
+          source: IMPORTED_SOURCE_ID,
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": "#c4b5fd",
+            "circle-radius": [
+              "step", ["get", "point_count"],
+              28,
+              30,  38,
+              100, 50,
+              300, 64,
+            ],
+            "circle-opacity": 0.18,
+            "circle-blur": 0.7,
+          },
+        });
+
+        // Cluster bubble — frosted glass: low fill opacity so the map
+        // shows through, soft same-color stroke for the rim highlight.
         map.addLayer({
           id: IMPORTED_CLUSTER_LAYER,
           type: "circle",
@@ -495,10 +519,10 @@ export default function Map({
           paint: {
             "circle-color": [
               "step", ["get", "point_count"],
-              "#7c5fa3",       // 1–29
-              30,  "#6a4c93",  // 30–99
-              100, "#5a3a87",  // 100–299
-              300, "#4a2f7a",  // 300+
+              "#c4b5fd",       // 1–29  — light lavender
+              30,  "#a78bfa",  // 30–99
+              100, "#8b5cf6",  // 100–299
+              300, "#7c3aed",  // 300+  — deep amethyst
             ],
             "circle-radius": [
               "step", ["get", "point_count"],
@@ -507,13 +531,16 @@ export default function Map({
               100, 30,
               300, 38,
             ],
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "rgba(255, 255, 255, 0.45)",
-            "circle-opacity": 0.88,
+            "circle-opacity": 0.42,
+            "circle-stroke-width": 1.25,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-opacity": 0.55,
+            "circle-blur": 0.12,
           },
         });
 
-        // Cluster count label (white bold over the bubble).
+        // Cluster count label — white with a dark soft halo so it's
+        // legible across both glassy bubbles and the underlying basemap.
         map.addLayer({
           id: IMPORTED_COUNT_LAYER,
           type: "symbol",
@@ -530,24 +557,31 @@ export default function Map({
               300, 15,
             ],
             "text-allow-overlap": true,
+            "text-letter-spacing": 0.02,
           },
           paint: {
             "text-color": "#ffffff",
+            "text-halo-color": "rgba(20, 12, 36, 0.65)",
+            "text-halo-width": 1.5,
+            "text-halo-blur": 0.5,
           },
         });
 
-        // Unclustered individual points — visible once clusters break apart.
+        // Unclustered individual points — small glassy dot once a
+        // cluster breaks apart at high zoom.
         map.addLayer({
           id: IMPORTED_POINT_LAYER,
           type: "circle",
           source: IMPORTED_SOURCE_ID,
           filter: ["!", ["has", "point_count"]],
           paint: {
-            "circle-color": "#8b5cf6",
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 7],
-            "circle-stroke-width": 1.5,
-            "circle-stroke-color": "rgba(255, 255, 255, 0.55)",
-            "circle-opacity": 0.85,
+            "circle-color": "#a78bfa",
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3.5, 12, 5.5, 15, 7.5],
+            "circle-stroke-width": 1.25,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-opacity": 0.65,
+            "circle-opacity": 0.55,
+            "circle-blur": 0.08,
           },
         });
 
