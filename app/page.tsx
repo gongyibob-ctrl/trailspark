@@ -73,10 +73,16 @@ export default function LandingPage() {
             ~70% black for legibility.
             url() must use single quotes — React serializes inline style
             as `style="..."`, and double quotes inside the value would
-            terminate the HTML attribute. */}
+            terminate the HTML attribute.
+            NOTE: this layer must NOT use -z-10. `<main>` above has its
+            own solid bg color; a negative z would push this entire
+            block behind that bg and the photo would silently disappear.
+            Stay at default z-index (0) inside the section's stacking
+            context; the content below uses `relative z-10` to stack on
+            top. */}
         <div
           aria-hidden
-          className="absolute inset-0 -z-10"
+          className="absolute inset-0"
           style={{
             backgroundImage:
               `linear-gradient(90deg, rgba(10,22,18,0.72) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.20) 100%), ` +
@@ -86,7 +92,7 @@ export default function LandingPage() {
             backgroundPosition: "center",
           }}
         />
-        <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+        <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 sm:py-32">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
             AI-designed hiking trips · For visitors to the US West Coast
           </p>
@@ -115,7 +121,7 @@ export default function LandingPage() {
         </div>
 
         {/* Photo credit — small, unobtrusive, bottom-right */}
-        <div className="absolute bottom-2 right-3 text-[10px] text-white/30">
+        <div className="absolute bottom-2 right-3 z-10 text-[10px] text-white/30">
           {HERO_PHOTO_CREDIT}
         </div>
       </section>
