@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
+// Co-located with the component that needs it so non-/map routes don't
+// ship 9 KB gzipped of MapLibre styles for no reason.
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR } from "@/lib/types";
 import {
