@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import type { Trail } from "@/lib/types";
 import { DIFFICULTY_COLOR } from "@/lib/types";
@@ -225,6 +225,14 @@ export default function Map({
     loadGeometries().then(() => setGeomVersion((v) => v + 1));
   }, []);
 
+  // Guarded prefetch — used by both the zoom-threshold trigger and the
+  // selectedId trigger. Centralizing means there's one place that
+  // owns the "fetch + bump version" contract.
+  const ensureImported = useCallback(() => {
+    if (isImportedLoaded()) return;
+    prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
+  }, []);
+
   const linesGeoJSON = useMemo(
     () => buildLinesFeatureCollection(trails),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,15 +287,15 @@ export default function Map({
 
     // Lazy-fetch imported geometries the first time the user zooms past
     // park scale — that's where their lines start fading in via the
-    // opacity expression on LINE_LAYER_BASE. Listener removes itself
-    // after firing once.
+    // opacity expression on LINE_LAYER_BASE. `zoomend` fires once per
+    // gesture (vs. `zoom` which fires per animation frame) — same UX
+    // for a deferred prefetch, ~50× fewer invocations during pinch.
     const triggerImportedLoad = () => {
       if (map.getZoom() < 10) return;
-      map.off("zoom", triggerImportedLoad);
-      if (isImportedLoaded()) return;
-      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
+      map.off("zoomend", triggerImportedLoad);
+      ensureImported();
     };
-    map.on("zoom", triggerImportedLoad);
+    map.on("zoomend", triggerImportedLoad);
 
     // Wildfire layer setup helper — runs after style load
     const addWildfireLayers = async () => {
@@ -812,9 +820,7 @@ export default function Map({
     });
     const map = mapRef.current;
     if (!map) return;
-    if (selectedId?.startsWith("osm-") && !isImportedLoaded()) {
-      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
-    }
+    if (selectedId?.startsWith("osm-")) ensureImported();
     const updateFilter = () => {
       if (map.getLayer(LINE_LAYER_SELECTED)) {
         map.setFilter(LINE_LAYER_SELECTED, ["==", ["get", "id"], selectedId ?? "__none__"]);
@@ -825,7 +831,7 @@ export default function Map({
     };
     if (map.isStyleLoaded()) updateFilter();
     else map.once("load", updateFilter);
-  }, [selectedId]);
+  }, [selectedId, ensureImported]);
 
   // POI markers along the selected trail (cleared when no trail or no geometry)
   useEffect(() => {

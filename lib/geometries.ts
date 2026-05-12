@@ -53,8 +53,13 @@ export function prefetchImportedGeometries(): Promise<void> {
   importedPending = fetchLayer(IMPORTED_URL)
     .then((d) => { importedCache = d; importedLoaded = true; })
     .catch((e) => {
+      // Unlike the curated load, we DON'T mark imported as "loaded" on
+      // failure. A user on flaky cell might fail this fetch at zoom-10
+      // and recover bandwidth a minute later — we want the next trigger
+      // (zoom or selection) to retry. Clear the pending Promise so the
+      // next call doesn't return the rejected one.
       console.error("[geometries] imported load failed:", e);
-      importedLoaded = true;
+      importedPending = null;
     });
   return importedPending;
 }
