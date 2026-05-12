@@ -5,17 +5,20 @@ import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { TRAILS, TRAIL_BY_ID } from "@/lib/trails";
 import Sidebar from "@/components/Sidebar";
-import TrailDetail from "@/components/TrailDetail";
-import UserTrailDetail from "@/components/UserTrailDetail";
 import Legend from "@/components/Legend";
 import LocateButton from "@/components/LocateButton";
-import GPXDropZone from "@/components/GPXDropZone";
 import type { Trail } from "@/lib/types";
 import { useLocale } from "@/lib/i18n";
 import { useUploads } from "@/lib/uploads";
 import { useGeolocation } from "@/lib/use-geolocation";
 
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
+// TrailDetail (1400 lines + gear/weather/wildfire libs) and the
+// upload-flow components only run after user interaction, so they're
+// code-split out of the initial /map bundle.
+const TrailDetail     = dynamic(() => import("@/components/TrailDetail"),     { ssr: false });
+const UserTrailDetail = dynamic(() => import("@/components/UserTrailDetail"), { ssr: false });
+const GPXDropZone     = dynamic(() => import("@/components/GPXDropZone"),     { ssr: false });
 
 const QUERY_PARAM = "trail";
 
@@ -138,7 +141,7 @@ export default function Page() {
         userPosition={userPosition}
       />
 
-      <TrailDetail trail={selectedTrail} onClose={handleClose} />
+      {selectedTrail && <TrailDetail trail={selectedTrail} onClose={handleClose} />}
       {selectedUserTrail && (
         <UserTrailDetail
           trail={selectedUserTrail}
