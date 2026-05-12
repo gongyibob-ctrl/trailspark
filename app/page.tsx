@@ -67,18 +67,19 @@ export default function LandingPage() {
         id="plan"
         className="relative overflow-hidden border-b border-white/[0.06]"
       >
-        {/* Layered backgrounds: photo + diagonal overlay + side-gradient.
-            Stacked via background-image so we never end up with a single
-            <img> the form could paint over. */}
+        {/* Layered backgrounds: photo + diagonal overlay + vertical fade.
+            Note the single quotes around the url() — React serializes
+            inline style as `style="..."`, so any double quote inside the
+            CSS value terminates the HTML attribute and the photo silently
+            drops. CSS accepts either quote type. */}
         <div
           aria-hidden
           className="absolute inset-0 -z-10"
           style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(10,22,18,0.82) 0%, rgba(10,22,18,0.45) 55%, rgba(10,22,18,0.55) 100%),
-              linear-gradient(180deg, rgba(10,22,18,0.30) 0%, rgba(10,22,18,0.85) 100%),
-              url("${HERO_PHOTO_URL}")
-            `,
+            backgroundImage:
+              `linear-gradient(90deg, rgba(10,22,18,0.82) 0%, rgba(10,22,18,0.45) 55%, rgba(10,22,18,0.55) 100%), ` +
+              `linear-gradient(180deg, rgba(10,22,18,0.30) 0%, rgba(10,22,18,0.85) 100%), ` +
+              `url('${HERO_PHOTO_URL}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
