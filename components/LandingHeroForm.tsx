@@ -93,10 +93,10 @@ export function LandingHeroForm({ source = "landing-hero" }: Props) {
     return (
       <div className="rounded-2xl border border-forest-300/30 bg-forest-500/[0.08] p-5">
         <p className="text-[15px] font-semibold text-forest-100">
-          Got it — we'll be in touch within 24 hours.
+          You're on the beta list — plan arrives within 24h.
         </p>
         <p className="mt-1 text-[13px] text-white/65">
-          We'll review your trip details and email back a draft plan you can react to.
+          Our AI will draft your trip; one of us reviews and emails it back. Reply to that email with anything to refine.
         </p>
       </div>
     );
@@ -168,14 +168,14 @@ export function LandingHeroForm({ source = "landing-hero" }: Props) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[11.5px] text-white/40">
-          Free during beta · No credit card · We reply within 24h
+          Free during beta · No credit card · AI plan within 24h
         </p>
         <button
           type="submit"
           disabled={status === "sending" || !email}
           className="rounded-xl bg-forest-400 px-6 py-3 text-[14.5px] font-semibold text-black transition hover:bg-forest-300 disabled:opacity-60"
         >
-          {status === "sending" ? "Sending…" : "Design my trip →"}
+          {status === "sending" ? "Sending…" : "Get my AI trip plan →"}
         </button>
       </div>
     </form>

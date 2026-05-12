@@ -10,16 +10,20 @@ Last updated: 2026-05-11
 
 ## TL;DR
 
-**We design hand-crafted multi-day hiking trips for visitors to the US
+**We use AI to design multi-day hiking trips for visitors to the US
 West Coast.** Our target user *does not know* which trails to do — they
 just know they have N days, a region preference, a fitness level, and a
-vibe. We pick the trails, plan the drives, handle the permits, and ship
-a day-by-day plan in 24 hours.
+vibe. The AI picks the trails, plans the drives, handles the permits,
+and ships a day-by-day plan in 24 hours.
 
-- Manual-concierge MVP today; AI-augmented later.
+- **Wizard of Oz MVP today**: front-end promises "AI-designed plan in 24h"
+  to validate user willingness to choose AI; back-end is **Yibo manually
+  drafting plans** (occasionally LLM-assisted) until we have signal.
+  Limited to "first 50 beta trips, hand-onboarded" — language on landing
+  is honest about the early-access framing without hiding the AI promise.
 - Free browse layer (75 hand-curated + 1,707 community trails) supports
-  SEO discovery and gives the human/AI a structured catalog to plan from.
-- Paid layer: $99–299 per trip plan, depending on complexity.
+  SEO discovery and gives the human-or-AI a structured catalog to plan from.
+- Paid layer: $99–299 per trip plan once PMF is validated.
 - Companion SMS during the trip (planned).
 
 Positioning line: **"You don't know the West Coast. We do."**

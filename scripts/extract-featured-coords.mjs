@@ -14,12 +14,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // Mirror of lib/featured.ts FEATURED_IDS. Kept in sync by hand; the loader
 // pattern keeps this script dependency-free (no TS imports).
 const FEATURED_IDS = [
-  "half-dome",
-  "skyline-paradise",
-  "hurricane-hill",
-  "garfield-peak",
-  "fern-canyon",
-  "ryan-mountain",
+  "hurricane-hill",      // easy
+  "mist-trail",          // moderate
+  "multnomah-wahkeena",  // moderate
+  "cascade-pass",        // hard
+  "south-sister",        // hard
+  "half-dome",           // extreme
 ];
 
 const geomFile = resolve(ROOT, "public/geometries.json");

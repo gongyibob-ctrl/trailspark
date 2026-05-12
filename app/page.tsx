@@ -18,17 +18,17 @@ const HERO_PHOTO_URL =
 const HERO_PHOTO_CREDIT = "Photo: Bailey Zindel / Unsplash";
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — We design West Coast hiking trips for visitors`,
+  title: `${SITE_NAME} — AI-designed West Coast hiking trips for visitors`,
   description:
-    "Visiting California, Oregon, or Washington? Tell us your dates. We pick the trails, plan the drives, handle permits and gear — a hand-crafted multi-day hiking trip in 24 hours. Free during beta.",
+    "Visiting California, Oregon, or Washington? Tell us your dates. Our AI designs your complete multi-day hiking trip — trails, drives, permits, gear — in 24 hours. Free during beta.",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Custom hiking trips for the US West Coast`,
+    title: `${SITE_NAME} — AI-designed hiking trips for the US West Coast`,
     description:
-      "You don't know the West Coast. We do. Tell us your dates and what kind of trip you want — we design the whole thing.",
+      "You don't know the West Coast. We do. Tell us your dates — our AI designs the trip.",
   },
 };
 
@@ -68,17 +68,19 @@ export default function LandingPage() {
         className="relative overflow-hidden border-b border-white/[0.06]"
       >
         {/* Layered backgrounds: photo + diagonal overlay + vertical fade.
-            Note the single quotes around the url() — React serializes
-            inline style as `style="..."`, so any double quote inside the
-            CSS value terminates the HTML attribute and the photo silently
-            drops. CSS accepts either quote type. */}
+            Calibrated so the photo stays ~50–70% visible on the right
+            while the left column (where the headline + form sit) gets
+            ~70% black for legibility.
+            url() must use single quotes — React serializes inline style
+            as `style="..."`, and double quotes inside the value would
+            terminate the HTML attribute. */}
         <div
           aria-hidden
           className="absolute inset-0 -z-10"
           style={{
             backgroundImage:
-              `linear-gradient(90deg, rgba(10,22,18,0.82) 0%, rgba(10,22,18,0.45) 55%, rgba(10,22,18,0.55) 100%), ` +
-              `linear-gradient(180deg, rgba(10,22,18,0.30) 0%, rgba(10,22,18,0.85) 100%), ` +
+              `linear-gradient(90deg, rgba(10,22,18,0.72) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.20) 100%), ` +
+              `linear-gradient(180deg, rgba(10,22,18,0.12) 0%, rgba(10,22,18,0.55) 100%), ` +
               `url('${HERO_PHOTO_URL}')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
@@ -86,7 +88,7 @@ export default function LandingPage() {
         />
         <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
-            Hand-crafted hiking trips · For visitors to the US West Coast
+            AI-designed hiking trips · For visitors to the US West Coast
           </p>
           <h1 className="mt-4 font-display text-5xl leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-[68px]">
             You don't know the West Coast.
@@ -95,9 +97,9 @@ export default function LandingPage() {
           </h1>
           <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/75">
             Tell us your dates and what kind of hiking trip you want.
-            We pick the trails, plan the drives, handle the permits, sort
-            the gear — and email you a hand-crafted day-by-day plan in 24 hours.
-            Free during beta.
+            Our AI picks the trails, plans the drives, handles the permits,
+            sorts the gear — and emails you a complete day-by-day plan within 24 hours.
+            Free during beta · we're hand-onboarding our first 50 trips.
           </p>
           <div className="mt-8 max-w-2xl">
             <LandingHeroForm source="landing-hero" />
@@ -128,12 +130,12 @@ export default function LandingPage() {
             <ValueCard
               icon={<Sparkles className="h-5 w-5 text-forest-300" />}
               title="You don't pick the trails"
-              body={`Tell us when you're coming and what kind of trip you want. We choose from ${CURATED_TRAILS.length} hand-curated and ${IMPORTED_TRAILS.length.toLocaleString()} community-mapped routes — matched to your fitness, group, and preferences.`}
+              body={`Tell us when you're coming and what kind of trip you want. Our AI matches you to ${CURATED_TRAILS.length} hand-curated and ${IMPORTED_TRAILS.length.toLocaleString()} community-mapped routes — by your fitness, group, and preferences.`}
             />
             <ValueCard
               icon={<Compass className="h-5 w-5 text-forest-300" />}
               title="Logistics, solved"
-              body="Permit lotteries, parking lots that fill by 7am, drive times honest about traffic, gear lists by season and elevation, food estimates by mileage. The stuff you'd burn 8 hours researching."
+              body="Permit lotteries, parking lots that fill by 7am, drive times honest about traffic, gear lists by season and elevation, food estimates by mileage. The 8 hours of research you don't have to do."
             />
             <ValueCard
               icon={<MessageSquare className="h-5 w-5 text-forest-300" />}
@@ -182,7 +184,7 @@ export default function LandingPage() {
               Email + duration + region (or "open"). Your fitness, group,
               what you want from the trip. No trail picks needed — we handle that.
             </Step>
-            <Step n="2" title="We hand-craft the plan">
+            <Step n="2" title="AI designs your plan">
               Within 24 hours: a complete day-by-day with trail picks, drives,
               permits, parking, gear, food. Reply with anything to refine.
             </Step>
@@ -198,11 +200,11 @@ export default function LandingPage() {
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="rounded-2xl border border-forest-300/20 bg-gradient-to-br from-forest-500/[0.10] to-ember-500/[0.05] p-8 sm:p-10">
           <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
-            Ready to design your trip?
+            Join the beta — your AI trip plan in 24h
           </h2>
           <p className="mt-3 max-w-xl text-[15px] text-white/70">
-            Free during beta. Limited to our first 50 visitors — help us shape
-            the product and you'll get our most attentive plans.
+            Free for our first 50 trips. We're hand-onboarding the early ones
+            so we can tune the AI — you'll get the most attentive plans.
           </p>
           <div className="mt-6 max-w-2xl">
             <LandingHeroForm source="landing-footer" />
