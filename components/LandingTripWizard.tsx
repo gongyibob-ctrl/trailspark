@@ -122,7 +122,7 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
 
   // ============== Numbered wizard steps ==============
   return (
-    <div className="max-w-2xl rounded-2xl border border-white/[0.12] bg-black/40 p-6 backdrop-blur-md">
+    <div className="max-w-2xl rounded-2xl border border-white/[0.15] bg-black/65 p-6 shadow-[0_8px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl">
       {/* Progress */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">

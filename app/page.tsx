@@ -3,7 +3,6 @@ import Link from "next/link";
 import { TRAIL_BY_ID, CURATED_TRAILS } from "@/lib/trails";
 import { IMPORTED_TRAILS } from "@/lib/trails-imported";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
-import { LandingHeroForm } from "@/components/LandingHeroForm";
 import { LandingTripWizard } from "@/components/LandingTripWizard";
 import { TrailCard } from "@/components/TrailCard";
 import { FEATURED_IDS } from "@/lib/featured";
@@ -97,17 +96,28 @@ export default function LandingPage() {
           }}
         />
 
-        {/* Content */}
+        {/* Content. Typography uses heavy text-shadow so it stays readable
+            on the bright halves of the photo (Moraine Lake, snow, sky).
+            Without shadow, white-on-blue-water washes out. */}
         <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 sm:py-32">
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
+          <p
+            className="text-[12px] font-bold uppercase tracking-[0.2em] text-forest-200"
+            style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
+          >
             AI-designed hiking trips · For visitors to the US West Coast
           </p>
-          <h1 className="mt-4 font-display text-5xl leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-[68px]">
+          <h1
+            className="mt-4 font-display text-5xl leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-[72px]"
+            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.45)" }}
+          >
             You don't know the West Coast.
             <br />
             <span className="text-forest-200">We do.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/80">
+          <p
+            className="mt-6 max-w-2xl text-[17px] font-medium leading-relaxed text-white"
+            style={{ textShadow: "0 1px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)" }}
+          >
             Tell us your dates. Our AI picks the trails, plans the drives,
             handles permits and gear — and emails you a complete day-by-day
             plan within 24 hours.
@@ -115,7 +125,10 @@ export default function LandingPage() {
           <div className="mt-8 max-w-2xl">
             <LandingTripWizard source="landing-hero" />
           </div>
-          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/65">
+          <div
+            className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium text-white/85"
+            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}
+          >
             <Link href="/map" className="inline-flex items-center gap-1.5 hover:text-white">
               <MapPin className="h-4 w-4" /> Explore the map
             </Link>
@@ -207,19 +220,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER CTA + LINKS */}
+      {/* FOOTER CTA + LINKS. Single button back to the hero wizard —
+          no duplicate form. The hero already does the lead capture. */}
       <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="rounded-2xl border border-forest-300/20 bg-gradient-to-br from-forest-500/[0.10] to-ember-500/[0.05] p-8 sm:p-10">
+        <div className="rounded-2xl border border-forest-300/20 bg-gradient-to-br from-forest-500/[0.10] to-ember-500/[0.05] p-8 text-center sm:p-12">
           <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
-            Join the beta — your AI trip plan in 24h
+            Ready to plan?
           </h2>
-          <p className="mt-3 max-w-xl text-[15px] text-white/70">
-            Free for our first 50 trips. We're hand-onboarding the early ones
-            so we can tune the AI — you'll get the most attentive plans.
+          <p className="mx-auto mt-3 max-w-xl text-[15px] text-white/70">
+            Free during beta · we're hand-onboarding our first 50 trips. Tell us
+            your dates and we'll send a plan within 24 hours.
           </p>
-          <div className="mt-6 max-w-2xl">
-            <LandingHeroForm source="landing-footer" />
-          </div>
+          <Link
+            href="/#plan"
+            className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-forest-400 px-6 py-3 text-[15px] font-bold text-black transition hover:bg-forest-300"
+          >
+            Start planning my trip →
+          </Link>
         </div>
 
         <nav className="mt-16 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/[0.06] pt-6 text-[12.5px] text-white/45">
