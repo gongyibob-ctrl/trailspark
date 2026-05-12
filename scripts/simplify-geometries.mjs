@@ -18,8 +18,11 @@ const SRC = resolve(ROOT, "lib/geometries.json");
 const DST_CURATED  = resolve(ROOT, "public/geometries.json");
 const DST_IMPORTED = resolve(ROOT, "public/geometries-imported.json");
 
-const MAX_POINTS_PER_LINE = 250;
-const MAX_TOTAL_POINTS_PER_TRAIL = 1500;
+// Per-tier point caps. Imported trails get tighter limits so the
+// public/geometries-imported.json bundle stays small (mobile bandwidth);
+// curated keeps the higher fidelity since it's the editorial product.
+const CAPS_CURATED  = { line: 250, total: 1500 };
+const CAPS_IMPORTED = { line: 120, total: 600 };
 
 function decimateTo(coords, maxPoints) {
   if (coords.length <= maxPoints) return coords;
@@ -36,17 +39,16 @@ function roundLine(coords) {
   return coords.map(([lng, lat]) => [Math.round(lng * 1e5) / 1e5, Math.round(lat * 1e5) / 1e5]);
 }
 
-function simplifyGeom(geom) {
+function simplifyGeom(geom, caps) {
   if (geom.type === "LineString") {
-    let c = decimateTo(geom.coordinates, MAX_POINTS_PER_LINE);
+    let c = decimateTo(geom.coordinates, caps.line);
     return { type: "LineString", coordinates: roundLine(c) };
   }
   if (geom.type === "MultiLineString") {
-    let lines = geom.coordinates.map((l) => decimateTo(l, MAX_POINTS_PER_LINE));
-    // Apply trail-wide cap: if total still over budget, shrink each line proportionally
+    let lines = geom.coordinates.map((l) => decimateTo(l, caps.line));
     const total = lines.reduce((s, l) => s + l.length, 0);
-    if (total > MAX_TOTAL_POINTS_PER_TRAIL) {
-      const scale = MAX_TOTAL_POINTS_PER_TRAIL / total;
+    if (total > caps.total) {
+      const scale = caps.total / total;
       lines = lines.map((l) => decimateTo(l, Math.max(2, Math.floor(l.length * scale))));
     }
     return {
@@ -73,12 +75,14 @@ const imported = {};
 for (const [id, entry] of Object.entries(raw)) {
   if (!entry.geom) continue;
   originalPts += totalCoords(entry.geom);
-  const simplified = { source: entry.source, geom: simplifyGeom(entry.geom) };
-  simplifiedPts += totalCoords(simplified.geom);
   // Split by id prefix. Imported trails always carry `osm-` prefix
   // (assigned by scripts/enrich-osm-trails.mjs); curated entries don't.
-  if (id.startsWith("osm-")) imported[id] = simplified;
-  else                       curated[id]  = simplified;
+  const isImported = id.startsWith("osm-");
+  const caps = isImported ? CAPS_IMPORTED : CAPS_CURATED;
+  const simplified = { source: entry.source, geom: simplifyGeom(entry.geom, caps) };
+  simplifiedPts += totalCoords(simplified.geom);
+  if (isImported) imported[id] = simplified;
+  else            curated[id]  = simplified;
 }
 
 mkdirSync(dirname(DST_CURATED), { recursive: true });

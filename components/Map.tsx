@@ -214,14 +214,14 @@ export default function Map({
     pickLocalizedParkUnit: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.parkUnit, tr.parkUnit),
   };
 
-  // Curated geometries load eagerly; imported (6.8 MB) prefetches in the
-  // background once curated resolves so it doesn't compete for bandwidth on
-  // first paint. Each layer triggers a re-render via geomVersion bump.
+  // Curated geometries load eagerly (~830 KB). Imported geometries
+  // (~6.8 MB raw / ~2 MB gz) are NOT auto-prefetched: most mobile users
+  // browse at default zoom where imported lines aren't visible anyway,
+  // and the download + JSON.parse was the felt mobile lag. Imported is
+  // demand-fetched via two triggers further below: zoom ≥ 10, or user
+  // selects an osm-* trail.
   useEffect(() => {
-    loadGeometries().then(() => {
-      setGeomVersion((v) => v + 1);
-      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
-    });
+    loadGeometries().then(() => setGeomVersion((v) => v + 1));
   }, []);
 
   const linesGeoJSON = useMemo(
@@ -275,6 +275,16 @@ export default function Map({
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
+
+    // Lazy-fetch imported geometries the first time the user zooms past
+    // park scale — that's where their lines start fading in via the
+    // opacity expression on LINE_LAYER_BASE.
+    const triggerImportedLoad = () => {
+      if (map.getZoom() < 10) return;
+      map.off("zoom", triggerImportedLoad);
+      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
+    };
+    map.on("zoom", triggerImportedLoad);
 
     // Wildfire layer setup helper — runs after style load
     const addWildfireLayers = async () => {
@@ -430,8 +440,15 @@ export default function Map({
         });
       }
 
-      // Wildfire perimeters (after lines so they sit above)
-      addWildfireLayers();
+      // Wildfire perimeters — deferred so the NIFC fetch doesn't compete
+      // with critical map tiles + trail-line setup on first paint. Uses
+      // requestIdleCallback where supported; falls back to a generous
+      // setTimeout on Safari.
+      const ric = (window as any).requestIdleCallback as
+        | ((cb: () => void, opts?: { timeout: number }) => number)
+        | undefined;
+      if (ric) ric(() => addWildfireLayers(), { timeout: 3000 });
+      else setTimeout(() => addWildfireLayers(), 1500);
 
       // User-uploaded GPX trails — distinct dashed violet line so they don't
       // visually compete with the curated 50.
@@ -769,7 +786,9 @@ export default function Map({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trails, geomVersion, locale]);
 
-  // Selected styling: marker class + line filter
+  // Selected styling: marker class + line filter. If the user selects
+  // an osm-* trail before zooming, we lazy-fetch imported geometries
+  // here so the selected line can render.
   useEffect(() => {
     Object.entries(markersRef.current).forEach(([id, marker]) => {
       const el = marker.getElement();
@@ -778,6 +797,9 @@ export default function Map({
     });
     const map = mapRef.current;
     if (!map) return;
+    if (selectedId?.startsWith("osm-")) {
+      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
+    }
     const updateFilter = () => {
       if (map.getLayer(LINE_LAYER_SELECTED)) {
         map.setFilter(LINE_LAYER_SELECTED, ["==", ["get", "id"], selectedId ?? "__none__"]);
