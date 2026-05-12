@@ -289,8 +289,12 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
           )}
         </Section>
 
-        {/* Plan-a-trip CTA — primary conversion in the in-app flow */}
-        <TrailInquiryForm trailId={trail.id} trailName={trail.name} variant="compact" />
+        {/* Plan-a-trip CTA — only for multi-day / thru-hike. Day hikes
+            don't need AI planning; the value compounds when there are
+            multiple decisions to coordinate. */}
+        {(trail.type === "multi-day" || trail.type === "thru-hike") && (
+          <TrailInquiryForm trailId={trail.id} trailName={trail.name} variant="compact" />
+        )}
 
         {/* Driving access / parking */}
         <AccessSection trail={trail} />

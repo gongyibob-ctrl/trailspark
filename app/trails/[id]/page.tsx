@@ -158,7 +158,20 @@ export default function TrailPage({ params }: RouteParams) {
         <p className="text-[15px] leading-relaxed text-white/85">{trail.description}</p>
       </section>
 
-      <TrailInquiryForm trailId={trail.id} trailName={trail.name} />
+      {/* Plan-a-trip CTA only on multi-day / thru-hike entries. A single
+          day hike doesn't need an AI planner — the planning value kicks in
+          when there are multiple decisions to coordinate. Day hikes get a
+          softer prompt to plan a multi-day trip around the area instead. */}
+      {trail.type === "multi-day" || trail.type === "thru-hike" ? (
+        <TrailInquiryForm trailId={trail.id} trailName={trail.name} />
+      ) : (
+        <section className="my-10 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 text-[13.5px] leading-relaxed text-white/70">
+          Visiting from out of town?{" "}
+          <Link href="/#plan" className="font-medium text-forest-200 underline-offset-2 hover:underline">
+            We can build a multi-day trip around {trail.parkUnit} for you →
+          </Link>
+        </section>
+      )}
 
       {trail.highlights.length > 0 && (
         <section className="mb-8">

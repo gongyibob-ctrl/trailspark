@@ -18,17 +18,17 @@ const FEATURED_IDS = [
 ];
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — Custom hiking trip plans for the US West Coast`,
+  title: `${SITE_NAME} — We design West Coast hiking trips for visitors`,
   description:
-    "Get a hand-crafted West Coast hiking trip plan in 24 hours. Trails, permits, parking, drives, gear — solved. Free during beta. Yosemite, Mt Rainier, Olympic, Crater Lake, Joshua Tree and 1,700+ named routes.",
+    "Visiting California, Oregon, or Washington? Tell us your dates. We pick the trails, plan the drives, handle permits and gear — a hand-crafted multi-day hiking trip in 24 hours. Free during beta.",
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Custom hiking trip plans for the US West Coast`,
+    title: `${SITE_NAME} — Custom hiking trips for the US West Coast`,
     description:
-      "Stop spending 8 hours juggling tabs to plan a hiking trip. We hand-craft your day-by-day — trails, permits, drives, gear — in 24h.",
+      "You don't know the West Coast. We do. Tell us your dates and what kind of trip you want — we design the whole thing.",
   },
 };
 
@@ -65,22 +65,23 @@ export default function LandingPage() {
               "radial-gradient(60% 60% at 70% 20%, #547d62 0%, transparent 60%), radial-gradient(60% 50% at 20% 80%, #ee7e3e 0%, transparent 60%)",
           }}
         />
-        <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300/90">
-            Personalized hiking trip planning · West Coast
+            Hand-crafted hiking trips · For visitors to the US West Coast
           </p>
           <h1 className="mt-4 font-display text-5xl leading-[1.05] tracking-tight text-white sm:text-6xl">
-            AllTrails shows you where.
+            You don't know the West Coast.
             <br />
-            <span className="text-forest-200">We tell you how.</span>
+            <span className="text-forest-200">We do.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/70">
-            Tell us when you're going. We hand-craft your day-by-day plan —
-            trails, permits, parking, drives, gear — and reply within 24 hours.
-            Currently free while we shape the product with our first users.
+            Tell us your dates and what kind of hiking trip you want.
+            We pick the trails, plan the drives, handle the permits, sort
+            the gear — and email you a hand-crafted day-by-day plan in 24 hours.
+            Free during beta.
           </p>
-          <div className="mt-8 max-w-xl">
-            <LandingHeroForm />
+          <div className="mt-8 max-w-2xl">
+            <LandingHeroForm source="landing-hero" />
           </div>
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/55">
             <Link href="/map" className="inline-flex items-center gap-1.5 hover:text-white">
@@ -102,18 +103,18 @@ export default function LandingPage() {
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             <ValueCard
               icon={<Sparkles className="h-5 w-5 text-forest-300" />}
-              title="Curated, not crowdsourced"
-              body={`${CURATED_TRAILS.length} hand-picked routes with full editorial — scenery rated, parking notes, season tested. Plus ${IMPORTED_TRAILS.length.toLocaleString()} community routes from OpenStreetMap.`}
+              title="You don't pick the trails"
+              body={`Tell us when you're coming and what kind of trip you want. We choose from ${CURATED_TRAILS.length} hand-curated and ${IMPORTED_TRAILS.length.toLocaleString()} community-mapped routes — matched to your fitness, group, and preferences.`}
             />
             <ValueCard
               icon={<Compass className="h-5 w-5 text-forest-300" />}
               title="Logistics, solved"
-              body="Permit lotteries, parking lots that fill by 7am, gear lists by season and elevation, food estimates by mileage, drive times honest about traffic."
+              body="Permit lotteries, parking lots that fill by 7am, drive times honest about traffic, gear lists by season and elevation, food estimates by mileage. The stuff you'd burn 8 hours researching."
             />
             <ValueCard
               icon={<MessageSquare className="h-5 w-5 text-forest-300" />}
               title="Plans that adapt"
-              body="We're on text the whole trip. Weather changes, lottery results drop, snow lingers — we re-route in real time so you're not stuck with a stale PDF."
+              body="We're on text the whole trip. Weather changes, snow lingers, you're tired — we re-route on the fly so you're not stuck with a stale PDF."
             />
           </div>
         </div>
@@ -168,16 +169,16 @@ export default function LandingPage() {
             How it works
           </h2>
           <ol className="mt-8 grid gap-6 sm:grid-cols-3">
-            <Step n="1" title="Tell us when and who">
-              Drop your email + a one-liner about the trip. Dates, group size,
-              fitness level, vibe — whatever you've got.
+            <Step n="1" title="Tell us your dates and style">
+              Email + duration + region (or "open"). Your fitness, group,
+              what you want from the trip. No trail picks needed — we handle that.
             </Step>
             <Step n="2" title="We hand-craft the plan">
-              Within 24 hours: a complete day-by-day with trails, permits,
-              parking, drives, gear, food. Reply with anything to refine.
+              Within 24 hours: a complete day-by-day with trail picks, drives,
+              permits, parking, gear, food. Reply with anything to refine.
             </Step>
             <Step n="3" title="We adapt as you go">
-              Weather, permits, conditions — we're on text the whole trip.
+              Weather, permits, snow, your knees — we're on text the whole trip.
               You get a plan that survives contact with reality.
             </Step>
           </ol>
@@ -188,14 +189,14 @@ export default function LandingPage() {
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="rounded-2xl border border-forest-300/20 bg-gradient-to-br from-forest-500/[0.10] to-ember-500/[0.05] p-8 sm:p-10">
           <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
-            Ready to plan your next trip?
+            Ready to design your trip?
           </h2>
           <p className="mt-3 max-w-xl text-[15px] text-white/70">
-            Free during beta. Limited to our first 50 users — help us shape
+            Free during beta. Limited to our first 50 visitors — help us shape
             the product and you'll get our most attentive plans.
           </p>
-          <div className="mt-6 max-w-lg">
-            <LandingHeroForm />
+          <div className="mt-6 max-w-2xl">
+            <LandingHeroForm source="landing-footer" />
           </div>
         </div>
 
