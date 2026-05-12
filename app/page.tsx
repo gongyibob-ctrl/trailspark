@@ -4,6 +4,7 @@ import { TRAIL_BY_ID, CURATED_TRAILS } from "@/lib/trails";
 import { IMPORTED_TRAILS } from "@/lib/trails-imported";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { LandingHeroForm } from "@/components/LandingHeroForm";
+import { LandingTripWizard } from "@/components/LandingTripWizard";
 import { TrailCard } from "@/components/TrailCard";
 import { FEATURED_IDS } from "@/lib/featured";
 import featuredCoords from "@/lib/featured-coords.json";
@@ -60,38 +61,43 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
 
-      {/* HERO — full-bleed photo with dark gradient overlay (H1).
-          Preload hint is in the <head> via metadata so the LCP image
-          starts downloading before paint. */}
+      {/* HERO — full-bleed photo + dark overlay + step-by-step wizard CTA.
+          We use a real <img> (not CSS background-image) so the photo is
+          (a) trivially debuggable in DevTools Network, (b) immune to the
+          CSS-url() cache quirks that bit us earlier, and (c) able to use
+          object-cover + a sizes hint for responsive fetching. */}
       <section
         id="plan"
         className="relative overflow-hidden border-b border-white/[0.06]"
       >
-        {/* Layered backgrounds: photo + diagonal overlay + vertical fade.
-            Calibrated so the photo stays ~50–70% visible on the right
-            while the left column (where the headline + form sit) gets
-            ~70% black for legibility.
-            url() must use single quotes — React serializes inline style
-            as `style="..."`, and double quotes inside the value would
-            terminate the HTML attribute.
-            NOTE: this layer must NOT use -z-10. `<main>` above has its
-            own solid bg color; a negative z would push this entire
-            block behind that bg and the photo would silently disappear.
-            Stay at default z-index (0) inside the section's stacking
-            context; the content below uses `relative z-10` to stack on
-            top. */}
+        {/* Photo */}
+        <img
+          src={HERO_PHOTO_URL}
+          alt=""
+          aria-hidden
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* Overlay tints — separate divs so each gradient stacks predictably */}
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
-            backgroundImage:
-              `linear-gradient(90deg, rgba(10,22,18,0.72) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.20) 100%), ` +
-              `linear-gradient(180deg, rgba(10,22,18,0.12) 0%, rgba(10,22,18,0.55) 100%), ` +
-              `url('${HERO_PHOTO_URL}')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            background:
+              "linear-gradient(90deg, rgba(10,22,18,0.72) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.20) 100%)",
           }}
         />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(10,22,18,0.12) 0%, rgba(10,22,18,0.55) 100%)",
+          }}
+        />
+
+        {/* Content */}
         <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 sm:py-32">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
             AI-designed hiking trips · For visitors to the US West Coast
@@ -101,16 +107,15 @@ export default function LandingPage() {
             <br />
             <span className="text-forest-200">We do.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/75">
-            Tell us your dates and what kind of hiking trip you want.
-            Our AI picks the trails, plans the drives, handles the permits,
-            sorts the gear — and emails you a complete day-by-day plan within 24 hours.
-            Free during beta · we're hand-onboarding our first 50 trips.
+          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/80">
+            Tell us your dates. Our AI picks the trails, plans the drives,
+            handles permits and gear — and emails you a complete day-by-day
+            plan within 24 hours.
           </p>
           <div className="mt-8 max-w-2xl">
-            <LandingHeroForm source="landing-hero" />
+            <LandingTripWizard source="landing-hero" />
           </div>
-          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/60">
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/65">
             <Link href="/map" className="inline-flex items-center gap-1.5 hover:text-white">
               <MapPin className="h-4 w-4" /> Explore the map
             </Link>
@@ -121,7 +126,7 @@ export default function LandingPage() {
         </div>
 
         {/* Photo credit — small, unobtrusive, bottom-right */}
-        <div className="absolute bottom-2 right-3 z-10 text-[10px] text-white/30">
+        <div className="absolute bottom-2 right-3 z-10 text-[10px] text-white/35">
           {HERO_PHOTO_CREDIT}
         </div>
       </section>
