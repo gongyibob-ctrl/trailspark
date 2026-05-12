@@ -8,6 +8,7 @@ import {
   buildLinesFeatureCollection,
   getBounds,
   hasGeometry,
+  isImportedLoaded,
   loadGeometries,
   prefetchImportedGeometries,
 } from "@/lib/geometries";
@@ -278,10 +279,12 @@ export default function Map({
 
     // Lazy-fetch imported geometries the first time the user zooms past
     // park scale — that's where their lines start fading in via the
-    // opacity expression on LINE_LAYER_BASE.
+    // opacity expression on LINE_LAYER_BASE. Listener removes itself
+    // after firing once.
     const triggerImportedLoad = () => {
       if (map.getZoom() < 10) return;
       map.off("zoom", triggerImportedLoad);
+      if (isImportedLoaded()) return;
       prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
     };
     map.on("zoom", triggerImportedLoad);
@@ -784,7 +787,19 @@ export default function Map({
     if (map.loaded() && map.isStyleLoaded()) addMarkers();
     else map.once("load", addMarkers);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trails, geomVersion, locale]);
+  }, [trails, locale]);
+
+  // When geometries arrive (curated or imported), refresh only the
+  // `trail-pin-small` class on existing markers — don't tear down +
+  // rebuild all 75 HTML markers + popups + event listeners. Imported
+  // trails don't have HTML markers at all (clustered points), so this
+  // is genuinely cheap.
+  useEffect(() => {
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const el = marker.getElement();
+      el.classList.toggle("trail-pin-small", hasGeometry(id));
+    });
+  }, [geomVersion]);
 
   // Selected styling: marker class + line filter. If the user selects
   // an osm-* trail before zooming, we lazy-fetch imported geometries
@@ -797,7 +812,7 @@ export default function Map({
     });
     const map = mapRef.current;
     if (!map) return;
-    if (selectedId?.startsWith("osm-")) {
+    if (selectedId?.startsWith("osm-") && !isImportedLoaded()) {
       prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
     }
     const updateFilter = () => {
