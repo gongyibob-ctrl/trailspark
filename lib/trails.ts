@@ -1646,7 +1646,9 @@ const RAW_TRAILS: Omit<Trail, "popularity" | "scenery">[] = [
   },
 ];
 
-export const TRAILS: Trail[] = RAW_TRAILS.map((t) => {
+/** Hand-curated trails with full editorial: scenery rating, descriptions,
+ *  highlights, parking notes, Chinese translations. Marked tier="featured". */
+export const CURATED_TRAILS: Trail[] = RAW_TRAILS.map((t) => {
   const popularity = POPULARITY_BY_ID[t.id];
   const scenery = SCENERY_BY_ID[t.id];
   if (popularity == null) {
@@ -1661,7 +1663,16 @@ export const TRAILS: Trail[] = RAW_TRAILS.map((t) => {
     scenery,
     // Inline `endpoint` on the entry (if any) wins; otherwise use the side-map
     endpoint: t.endpoint ?? ENDPOINT_BY_ID[t.id],
+    tier: "featured" as const,
   };
 });
+
+// IMPORTED_TRAILS (1,707 OSM-imported entries) live in lib/trails-imported.ts.
+// They join the canonical TRAILS export here so every list/map/search surface
+// sees the combined catalog. UIs distinguish via `trail.tier` and the
+// `osm-` id prefix; see PRODUCT.md "Two-tier UX strategy".
+import { IMPORTED_TRAILS } from "./trails-imported";
+
+export const TRAILS: Trail[] = [...CURATED_TRAILS, ...IMPORTED_TRAILS];
 
 export const TRAIL_BY_ID = Object.fromEntries(TRAILS.map((t) => [t.id, t])) as Record<string, Trail>;

@@ -7,6 +7,7 @@ import { getTrailPOIs } from "@/lib/trail-pois";
 import { formatLatLng, googleDirectionsUrl } from "@/lib/geo";
 import { SITE_URL, META_DESC_MAX } from "@/lib/site";
 import { DIFFICULTY_LABEL, TYPE_LABEL, SEASON_LABEL } from "@/lib/labels";
+import { TrailInquiryForm } from "@/components/TrailInquiryForm";
 
 interface RouteParams {
   params: { id: string };
@@ -81,7 +82,9 @@ export default function TrailPage({ params }: RouteParams) {
       { "@type": "PropertyValue", name: "Difficulty", value: DIFFICULTY_LABEL[trail.difficulty] },
       { "@type": "PropertyValue", name: "Trail Type", value: TYPE_LABEL[trail.type] },
       { "@type": "PropertyValue", name: "Best Seasons", value: trail.bestSeasons.map((s) => SEASON_LABEL[s]).join(", ") },
-      { "@type": "PropertyValue", name: "Scenery Rating", value: `${trail.scenery} / 5` },
+      ...(trail.scenery != null
+        ? [{ "@type": "PropertyValue", name: "Scenery Rating", value: `${trail.scenery} / 5` }]
+        : []),
     ],
   };
 
@@ -125,12 +128,27 @@ export default function TrailPage({ params }: RouteParams) {
           {DIFFICULTY_LABEL[trail.difficulty]} · {TYPE_LABEL[trail.type]} · Best in{" "}
           {trail.bestSeasons.map((s) => SEASON_LABEL[s]).join(", ")}
         </p>
+        {trail.tier === "imported" && (
+          <div className="mt-4 rounded-lg border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[12px] leading-relaxed text-violet-200/80">
+            <span className="font-semibold text-violet-200">Community route</span> —
+            data imported from OpenStreetMap. Length and elevation are computed
+            from the public trail geometry. Help improve this page by submitting
+            a rating, description, or photos.
+          </div>
+        )}
       </header>
 
       <section className="mb-8 grid grid-cols-3 gap-3 rounded-xl bg-white/[0.04] p-4 ring-1 ring-white/10">
         <Stat label="Length" value={`${trail.lengthMiles} mi`} />
         <Stat label="Gain" value={`${trail.elevationGainFt.toLocaleString()} ft`} />
-        <Stat label="Scenery" value={"★".repeat(trail.scenery) + "☆".repeat(5 - trail.scenery)} />
+        <Stat
+          label="Scenery"
+          value={
+            trail.scenery != null
+              ? "★".repeat(trail.scenery) + "☆".repeat(5 - trail.scenery)
+              : "Not yet rated"
+          }
+        />
       </section>
 
       <section className="mb-8">
@@ -139,6 +157,8 @@ export default function TrailPage({ params }: RouteParams) {
         </h2>
         <p className="text-[15px] leading-relaxed text-white/85">{trail.description}</p>
       </section>
+
+      <TrailInquiryForm trailId={trail.id} trailName={trail.name} />
 
       {trail.highlights.length > 0 && (
         <section className="mb-8">

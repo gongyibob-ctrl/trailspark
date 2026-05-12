@@ -8,3 +8,10 @@ build/
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Claude Code config
+.claude/
+
+# Intermediate outputs from scripts/ — derived from osm fetch + DEM pass.
+# Regenerate via `node scripts/fetch-osm-trails.mjs` then enrich + elevation.
+scripts/out/

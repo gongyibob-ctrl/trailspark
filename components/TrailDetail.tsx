@@ -229,15 +229,33 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
               {t("detail.permitRequired")}
             </Badge>
           )}
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-100"
-            title={t(`scenery.${trail.scenery}` as StringKey)}
-          >
-            <SceneryStars n={trail.scenery} size="sm" />
-            <span className="text-[10px] text-amber-200/85">
-              {t(`scenery.${trail.scenery}` as StringKey)}
+          {trail.tier === "imported" && (
+            <Badge
+              className="border-violet-400/25 bg-violet-500/10 text-violet-200"
+              title={t("tier.importedDesc")}
+            >
+              {t("tier.imported")}
+            </Badge>
+          )}
+          {trail.scenery != null ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-100"
+              title={t(`scenery.${trail.scenery}` as StringKey)}
+            >
+              <SceneryStars n={trail.scenery} size="sm" />
+              <span className="text-[10px] text-amber-200/85">
+                {t(`scenery.${trail.scenery}` as StringKey)}
+              </span>
             </span>
-          </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium text-white/55"
+              title={t("scenery.beFirst")}
+            >
+              <SceneryStars n={null} size="sm" title={t("scenery.unrated")} />
+              <span className="text-[10px] text-white/50">{t("scenery.unrated")}</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -263,6 +281,11 @@ export default function TrailDetail({ trail, onClose }: TrailDetailProps) {
         {/* Description */}
         <Section title={t("section.about")} accent="neutral" delay={1}>
           <p className="text-[13.5px] leading-relaxed text-white/80">{trailDescription}</p>
+          {trail.tier === "imported" && (
+            <p className="mt-2 text-[11px] leading-relaxed text-white/40">
+              {t("tier.importedShort")}
+            </p>
+          )}
         </Section>
 
         {/* Driving access / parking */}
@@ -378,9 +401,18 @@ function stagger(i: number): React.CSSProperties {
   return { ["--stagger" as any]: `${0.1 + i * 0.06}s`, animationDelay: `${0.08 + i * 0.06}s` };
 }
 
-function Badge({ className, children }: { className?: string; children: React.ReactNode }) {
+function Badge({
+  className,
+  children,
+  title,
+}: {
+  className?: string;
+  children: React.ReactNode;
+  title?: string;
+}) {
   return (
     <span
+      title={title}
       className={clsx(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
         className,

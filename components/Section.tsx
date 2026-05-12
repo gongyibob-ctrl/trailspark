@@ -61,23 +61,33 @@ interface StatProps {
 
 const STAR_INDEXES = [1, 2, 3, 4, 5] as const;
 
-/** Scenery rating, rendered as 5 stars with the first n filled. */
+/** Scenery rating, rendered as 5 stars with the first n filled.
+ *  `n = null` → all stars rendered as a dimmer outline, signaling "not yet
+ *  rated". The accompanying label is the caller's responsibility. */
 export function SceneryStars({
   n,
   size = "sm",
   title,
 }: {
-  n: number;
+  n: number | null;
   size?: "sm" | "md";
   title?: string;
 }) {
   const px = size === "md" ? "h-3 w-3" : "h-2.5 w-2.5";
+  const unrated = n == null;
   return (
     <span className="inline-flex items-center gap-0.5" role="img" aria-label={title} title={title}>
       {STAR_INDEXES.map((i) => (
         <Star
           key={i}
-          className={clsx(px, i <= n ? "fill-amber-300 text-amber-300" : "text-white/25")}
+          className={clsx(
+            px,
+            unrated
+              ? "text-white/15"                                  // not yet rated
+              : i <= n
+                ? "fill-amber-300 text-amber-300"                // filled
+                : "text-white/25",                                // empty above n
+          )}
           strokeWidth={1.5}
         />
       ))}

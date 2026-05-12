@@ -290,6 +290,13 @@ export const STRINGS = {
   "scenery.3":                  { en: "Very scenic",       zh: "风景优美" },
   "scenery.2":                  { en: "Pleasant",          zh: "舒适" },
   "scenery.1":                  { en: "Modest",            zh: "一般" },
+  "scenery.unrated":            { en: "Not yet rated",     zh: "暂无评分" },
+  "scenery.beFirst":            { en: "Be the first to rate", zh: "成为第一个评分的人" },
+
+  // Trail tier (curated vs OSM-imported)
+  "tier.imported":              { en: "Community route",   zh: "社区路线" },
+  "tier.importedDesc":          { en: "Imported from OpenStreetMap. Help improve this page by rating it and submitting details.", zh: "数据源自 OpenStreetMap 开放地图。欢迎评分和补充细节来完善这条路线。" },
+  "tier.importedShort":         { en: "Data from OpenStreetMap — community-maintained.", zh: "来自 OpenStreetMap 社区数据" },
 
   // Access / driving directions
   "access.heading":             { en: "Get there",                       zh: "前往这里" },

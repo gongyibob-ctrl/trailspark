@@ -1,60 +1,91 @@
-// Trail-line geometries are large (~600 KB). We serve them from /public so they
-// stream in lazily and don't bloat the initial JS bundle.
+// Trail-line geometries are split across two files to keep first paint fast:
+//   /geometries.json           — curated trails (~830 KB), eager on map mount
+//   /geometries-imported.json  — OSM imports (~6.8 MB), background prefetched
 //
-// Usage:
-//   await loadGeometries();
-//   getGeometry(trailId)  // sync after load resolves
-//   buildLinesFeatureCollection(trails)
+// Both populate the same in-memory accessor surface so callers can ignore the
+// split. Order of guarantees:
+//   loadGeometries()           — resolves when curated cache is ready
+//   prefetchImportedGeometries() — kicks off background load; resolves when
+//                                  imported cache is ready (or fails silently)
 //
-// Until loadGeometries() resolves, the accessors return null / empty collections.
+// Sync accessors (getGeometry / hasGeometry / getBounds) check both caches;
+// return null until the relevant layer is loaded. buildLinesFeatureCollection
+// only emits features for trails whose geometry is currently loaded — the
+// UI re-runs the build effect after each layer arrives.
 
 import { DIFFICULTY_COLOR } from "./types";
 import type { Trail, TrailGeometry, TrailGeometryEntry } from "./types";
 
-const FETCH_URL = "/geometries.json";
+const CURATED_URL  = "/geometries.json";
+const IMPORTED_URL = "/geometries-imported.json";
 
-let cache: Record<string, TrailGeometryEntry> = {};
-let loaded = false;
-let pending: Promise<void> | null = null;
+let curatedCache:  Record<string, TrailGeometryEntry> = {};
+let importedCache: Record<string, TrailGeometryEntry> = {};
+let curatedLoaded  = false;
+let importedLoaded = false;
+let curatedPending:  Promise<void> | null = null;
+let importedPending: Promise<void> | null = null;
+
+function fetchLayer(url: string): Promise<Record<string, TrailGeometryEntry>> {
+  return fetch(url).then((r) => {
+    if (!r.ok) throw new Error(`geometries fetch ${url} → ${r.status}`);
+    return r.json() as Promise<Record<string, TrailGeometryEntry>>;
+  });
+}
 
 export function loadGeometries(): Promise<void> {
-  if (loaded) return Promise.resolve();
-  if (pending) return pending;
-  pending = fetch(FETCH_URL)
-    .then((r) => {
-      if (!r.ok) throw new Error(`geometries fetch ${r.status}`);
-      return r.json() as Promise<Record<string, TrailGeometryEntry>>;
-    })
-    .then((d) => {
-      cache = d;
-      loaded = true;
-    })
+  if (curatedLoaded) return Promise.resolve();
+  if (curatedPending) return curatedPending;
+  curatedPending = fetchLayer(CURATED_URL)
+    .then((d) => { curatedCache = d; curatedLoaded = true; })
     .catch((e) => {
-      console.error("[geometries] load failed:", e);
-      loaded = true; // give up; sync APIs will treat as missing
+      console.error("[geometries] curated load failed:", e);
+      curatedLoaded = true; // give up; sync APIs treat as missing
     });
-  return pending;
+  return curatedPending;
+}
+
+/** Kick off the imported-geometry fetch in the background. Safe to call
+ *  multiple times — it's idempotent and resolves to the same Promise. */
+export function prefetchImportedGeometries(): Promise<void> {
+  if (importedLoaded) return Promise.resolve();
+  if (importedPending) return importedPending;
+  importedPending = fetchLayer(IMPORTED_URL)
+    .then((d) => { importedCache = d; importedLoaded = true; })
+    .catch((e) => {
+      console.error("[geometries] imported load failed:", e);
+      importedLoaded = true;
+    });
+  return importedPending;
 }
 
 export function isLoaded(): boolean {
-  return loaded;
+  return curatedLoaded;
+}
+
+export function isImportedLoaded(): boolean {
+  return importedLoaded;
 }
 
 export function geometryCount(): number {
-  return Object.keys(cache).length;
+  return Object.keys(curatedCache).length + Object.keys(importedCache).length;
+}
+
+function entryFor(id: string): TrailGeometryEntry | undefined {
+  return curatedCache[id] ?? importedCache[id];
 }
 
 export function hasGeometry(trailId: string): boolean {
-  return Boolean(cache[trailId]?.geom);
+  return Boolean(entryFor(trailId)?.geom);
 }
 
 export function getGeometry(trailId: string): TrailGeometry | null {
-  return cache[trailId]?.geom ?? null;
+  return entryFor(trailId)?.geom ?? null;
 }
 
 /** Returns [[west, south], [east, north]] or null if no geometry. */
 export function getBounds(trailId: string): [[number, number], [number, number]] | null {
-  const entry = cache[trailId];
+  const entry = entryFor(trailId);
   if (!entry?.geom) return null;
   let minLng = Infinity,
     minLat = Infinity,
@@ -80,7 +111,7 @@ export function getBounds(trailId: string): [[number, number], [number, number]]
 export function buildLinesFeatureCollection(trails: Trail[]): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
   for (const t of trails) {
-    const entry = cache[t.id];
+    const entry = entryFor(t.id);
     if (!entry?.geom) continue;
     features.push({
       type: "Feature",
@@ -90,6 +121,7 @@ export function buildLinesFeatureCollection(trails: Trail[]): GeoJSON.FeatureCol
         name: t.name,
         difficulty: t.difficulty,
         type: t.type,
+        tier: t.tier ?? "featured",
         color: DIFFICULTY_COLOR[t.difficulty],
       },
     });

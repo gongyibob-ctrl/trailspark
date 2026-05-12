@@ -9,6 +9,7 @@ import {
   getBounds,
   hasGeometry,
   loadGeometries,
+  prefetchImportedGeometries,
 } from "@/lib/geometries";
 import { fetchActiveFires } from "@/lib/wildfire";
 import { useLocale, pickLocalized, fmtElevation, fmtPoiMiles, type StringKey } from "@/lib/i18n";
@@ -202,10 +203,14 @@ export default function Map({
     pickLocalizedParkUnit: (tr: Trail) => pickLocalized(locale, TRAILS_ZH[tr.id]?.parkUnit, tr.parkUnit),
   };
 
-  // Kick off geometry fetch once. Bumping geomVersion forces the lines effect to re-run
-  // after the network round-trip resolves.
+  // Curated geometries load eagerly; imported (6.8 MB) prefetches in the
+  // background once curated resolves so it doesn't compete for bandwidth on
+  // first paint. Each layer triggers a re-render via geomVersion bump.
   useEffect(() => {
-    loadGeometries().then(() => setGeomVersion((v) => v + 1));
+    loadGeometries().then(() => {
+      setGeomVersion((v) => v + 1);
+      prefetchImportedGeometries().then(() => setGeomVersion((v) => v + 1));
+    });
   }, []);
 
   const linesGeoJSON = useMemo(
@@ -238,6 +243,18 @@ export default function Map({
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
+
+    // Imported (community) pins reveal only when the user is zoomed in past
+    // park scale — keeps the default cross-coast view from clogging with
+    // 1,700+ small pins. Threshold 10 is roughly "single park visible."
+    const ZOOM_REVEAL_IMPORTED = 10;
+    const updateRevealClass = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      container.classList.toggle("show-imported-pins", map.getZoom() >= ZOOM_REVEAL_IMPORTED);
+    };
+    map.on("zoom", updateRevealClass);
+    map.on("load", updateRevealClass);
 
     // Wildfire layer setup helper — runs after style load
     const addWildfireLayers = async () => {
@@ -321,7 +338,8 @@ export default function Map({
         });
       }
 
-      // Glow layer (blurry halo beneath the line)
+      // Glow layer (blurry halo beneath the line). Imported tier fades in
+      // around zoom 10 to match the imported-pin reveal threshold.
       if (!map.getLayer(LINE_LAYER_GLOW)) {
         map.addLayer({
           id: LINE_LAYER_GLOW,
@@ -330,13 +348,18 @@ export default function Map({
           paint: {
             "line-color": DIFFICULTY_COLOR_EXPR,
             "line-width": 8,
-            "line-opacity": 0.18,
+            "line-opacity": [
+              "case",
+              ["==", ["get", "tier"], "imported"],
+              ["interpolate", ["linear"], ["zoom"], 9.5, 0, 10.5, 0.10],
+              0.18,
+            ],
             "line-blur": 3,
           },
           layout: { "line-cap": "round", "line-join": "round" },
         });
       }
-      // Base line (always visible, all trails)
+      // Base line — featured always visible; imported fades in at zoom 10.
       if (!map.getLayer(LINE_LAYER_BASE)) {
         map.addLayer({
           id: LINE_LAYER_BASE,
@@ -345,7 +368,12 @@ export default function Map({
           paint: {
             "line-color": DIFFICULTY_COLOR_EXPR,
             "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.2, 10, 2.4, 14, 3.5],
-            "line-opacity": 0.8,
+            "line-opacity": [
+              "case",
+              ["==", ["get", "tier"], "imported"],
+              ["interpolate", ["linear"], ["zoom"], 9.5, 0, 10.5, 0.45],
+              0.8,
+            ],
           },
           layout: { "line-cap": "round", "line-join": "round" },
         });
@@ -521,9 +549,14 @@ export default function Map({
 
       trails.forEach((trail) => {
         const lined = hasGeometry(trail.id);
+        const isImported = trail.tier === "imported";
 
         const el = document.createElement("div");
-        el.className = `trail-pin ${lined ? "trail-pin-small" : ""}`;
+        el.className = [
+          "trail-pin",
+          lined && "trail-pin-small",
+          isImported && "trail-pin-imported",
+        ].filter(Boolean).join(" ");
         el.dataset.id = trail.id;
 
         const inner = document.createElement("div");

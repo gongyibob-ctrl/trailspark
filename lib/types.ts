@@ -42,8 +42,10 @@ export const POPULARITY_COLOR: Record<Popularity, string> = {
 
 /** Scenery rating, 1 (pleasant but not memorable) to 5 (legendary —
  *  bucket-list scenery you'll remember for years). Calibrated for the
- *  curated West Coast set, where even a 3 is a strong hike anywhere else. */
-export type Scenery = 1 | 2 | 3 | 4 | 5;
+ *  curated West Coast set, where even a 3 is a strong hike anywhere else.
+ *  `null` = imported trail not yet rated — UI renders grayed stars and a
+ *  "be the first to rate" affordance. */
+export type Scenery = 1 | 2 | 3 | 4 | 5 | null;
 
 export interface Trail {
   id: string;
@@ -71,6 +73,18 @@ export interface Trail {
    *  Chinese override lives in `TRAILS_ZH[id].parking`. */
   parking?: string;
   externalUrl?: string;
+  /** Editorial pedigree. `featured` = hand-curated entry with verified
+   *  description / highlights / scenery. `imported` = auto-imported from
+   *  OpenStreetMap; description is templated, scenery awaits user rating. */
+  tier?: "featured" | "imported";
+  /** For imported trails: provenance pointers (OSM relation/way id, optional
+   *  Wikipedia/Wikidata links). Editorial trails leave this unset. */
+  source?: {
+    type: "relation" | "way";
+    osmId: number;
+    wikipedia?: string;
+    wikidata?: string;
+  };
 }
 
 // GeoJSON-like geometry shape used by lib/geometries.json

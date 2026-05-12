@@ -1,6 +1,12 @@
-// Simplify lib/geometries.json (raw OSM, 6+ MB) into public/geometries.json
-// (smaller, fetched lazily by the client). Per-line decimation with a
-// hard point cap that preserves first/last and evenly samples in between.
+// Simplify lib/geometries.json (raw, ~53 MB) into two public-facing files:
+//   public/geometries.json          — curated trails only (~75, ~832 KB),
+//                                     loaded eagerly on map mount.
+//   public/geometries-imported.json — OSM-imported trails (~1,700, ~6-7 MB),
+//                                     prefetched in background after first
+//                                     paint so it doesn't block the UI.
+// Split criterion: trail id prefix. `osm-*` ids → imported file; everything
+// else → curated file. Per-line decimation with hard point cap preserves
+// first/last and evenly samples in between.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -9,7 +15,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const SRC = resolve(ROOT, "lib/geometries.json");
-const DST = resolve(ROOT, "public/geometries.json");
+const DST_CURATED  = resolve(ROOT, "public/geometries.json");
+const DST_IMPORTED = resolve(ROOT, "public/geometries-imported.json");
 
 const MAX_POINTS_PER_LINE = 250;
 const MAX_TOTAL_POINTS_PER_TRAIL = 1500;
@@ -61,21 +68,29 @@ const raw = JSON.parse(readFileSync(SRC, "utf8"));
 let originalPts = 0;
 let simplifiedPts = 0;
 
-const out = {};
+const curated  = {};
+const imported = {};
 for (const [id, entry] of Object.entries(raw)) {
   if (!entry.geom) continue;
   originalPts += totalCoords(entry.geom);
-  out[id] = { source: entry.source, geom: simplifyGeom(entry.geom) };
-  simplifiedPts += totalCoords(out[id].geom);
+  const simplified = { source: entry.source, geom: simplifyGeom(entry.geom) };
+  simplifiedPts += totalCoords(simplified.geom);
+  // Split by id prefix. Imported trails always carry `osm-` prefix
+  // (assigned by scripts/enrich-osm-trails.mjs); curated entries don't.
+  if (id.startsWith("osm-")) imported[id] = simplified;
+  else                       curated[id]  = simplified;
 }
 
-mkdirSync(dirname(DST), { recursive: true });
-writeFileSync(DST, JSON.stringify(out));
+mkdirSync(dirname(DST_CURATED), { recursive: true });
+writeFileSync(DST_CURATED,  JSON.stringify(curated));
+writeFileSync(DST_IMPORTED, JSON.stringify(imported));
 
-console.log(`Simplified ${Object.keys(out).length} trails`);
+const curatedCount  = Object.keys(curated).length;
+const importedCount = Object.keys(imported).length;
+console.log(`Simplified ${curatedCount + importedCount} trails  (curated=${curatedCount}, imported=${importedCount})`);
 console.log(`Points: ${originalPts.toLocaleString()} → ${simplifiedPts.toLocaleString()} (${((simplifiedPts / originalPts) * 100).toFixed(1)}%)`);
 
-// Sizes
-const srcSize = readFileSync(SRC).length;
-const dstSize = readFileSync(DST).length;
-console.log(`Bytes:  ${(srcSize / 1024 / 1024).toFixed(2)} MB → ${(dstSize / 1024).toFixed(0)} KB`);
+const fmtKB = (n) => `${(n / 1024).toFixed(0)} KB`;
+const fmtMB = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
+console.log(`Curated:  ${fmtKB(readFileSync(DST_CURATED).length)}  (eager-loaded)`);
+console.log(`Imported: ${fmtMB(readFileSync(DST_IMPORTED).length)}  (background prefetch)`);

@@ -450,7 +450,10 @@ function TrailCard({
                 >
                   {t(`popularity.${trail.popularity}` as StringKey)}
                 </span>
-                <SceneryStars n={trail.scenery} title={t(`scenery.${trail.scenery}` as StringKey)} />
+                <SceneryStars
+                  n={trail.scenery}
+                  title={t((trail.scenery != null ? `scenery.${trail.scenery}` : "scenery.unrated") as StringKey)}
+                />
               </div>
             </div>
           </div>
