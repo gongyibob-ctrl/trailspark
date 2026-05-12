@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { pathFromCoords } from "@/lib/svg-trace";
+import { DIFFICULTY_LABEL } from "@/lib/labels";
 import type { Trail } from "@/lib/types";
 
 const DIFFICULTY_HUE: Record<string, { stroke: string; pillBg: string; pillBorder: string; glow: string }> = {
@@ -11,13 +12,6 @@ const DIFFICULTY_HUE: Record<string, { stroke: string; pillBg: string; pillBorde
   moderate: { stroke: "#6ea8ff", pillBg: "rgba(110,168,255,0.16)", pillBorder: "rgba(110,168,255,0.40)", glow: "rgba(110,168,255,0.55)" },
   hard:     { stroke: "#ff9658", pillBg: "rgba(255,150,88,0.16)",  pillBorder: "rgba(255,150,88,0.40)",  glow: "rgba(255,150,88,0.55)"  },
   extreme:  { stroke: "#ff6b6b", pillBg: "rgba(255,107,107,0.16)", pillBorder: "rgba(255,107,107,0.40)", glow: "rgba(255,107,107,0.55)" },
-};
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  easy: "Easy",
-  moderate: "Moderate",
-  hard: "Hard",
-  extreme: "Extreme",
 };
 
 interface Props {

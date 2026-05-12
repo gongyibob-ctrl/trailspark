@@ -8,7 +8,7 @@ import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 // steps before asking for an email. This is meaningfully better than the
 // 9-field-at-once form on conversion AND lets the hero photo breathe.
 
-type Step = "intro" | "trip" | "you" | "vibe" | "email" | "ok" | "error";
+type Step = "intro" | "trip" | "you" | "vibe" | "email" | "ok";
 
 const DURATION_OPTIONS = ["3 days", "5 days", "7 days", "10 days", "2+ weeks"];
 const REGION_OPTIONS   = ["California", "Oregon", "Washington", "Open — surprise me"];
@@ -42,13 +42,15 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [errMsg, setErrMsg] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function togglePreference(p: string) {
     setPreferences((curr) => (curr.includes(p) ? curr.filter((x) => x !== p) : [...curr, p]));
   }
 
   async function submit() {
-    setStep("email"); // ensure we're showing the email step in case of error
+    if (submitting) return;
+    setSubmitting(true);
     setErrMsg("");
     const composedNotes = [
       duration   && `Duration: ${duration}`,
@@ -79,12 +81,13 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
       setStep("ok");
     } catch (e: any) {
       setErrMsg(e?.message ?? "Network error.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   const progressIdx = STEPS_WITH_PROGRESS.indexOf(step);
 
-  // ============== Intro (default) ==============
   if (step === "intro") {
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -101,7 +104,6 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
     );
   }
 
-  // ============== Success ==============
   if (step === "ok") {
     return (
       <div className="max-w-xl rounded-2xl border border-forest-300/30 bg-forest-500/[0.10] p-6 backdrop-blur-sm">
@@ -120,10 +122,8 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
     );
   }
 
-  // ============== Numbered wizard steps ==============
   return (
     <div className="max-w-2xl rounded-2xl border border-white/[0.15] bg-black/65 p-6 shadow-[0_8px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl">
-      {/* Progress */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {STEPS_WITH_PROGRESS.map((s, i) => (
@@ -142,7 +142,6 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
         </span>
       </div>
 
-      {/* TRIP — duration + region */}
       {step === "trip" && (
         <>
           <h3 className="font-display text-[24px] font-bold leading-tight text-white">
@@ -159,7 +158,6 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
         </>
       )}
 
-      {/* YOU — experience + group */}
       {step === "you" && (
         <>
           <h3 className="font-display text-[24px] font-bold leading-tight text-white">
@@ -180,7 +178,6 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
         </>
       )}
 
-      {/* VIBE — preferences + free-form notes */}
       {step === "vibe" && (
         <>
           <h3 className="font-display text-[24px] font-bold leading-tight text-white">
@@ -220,7 +217,6 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
         </>
       )}
 
-      {/* EMAIL — only thing left is identity */}
       {step === "email" && (
         <>
           <h3 className="font-display text-[24px] font-bold leading-tight text-white">
@@ -242,8 +238,8 @@ export function LandingTripWizard({ source = "landing-hero" }: { source?: string
           <Nav
             onBack={() => setStep("vibe")}
             onNext={submit}
-            nextLabel="Get my AI trip plan →"
-            nextDisabled={!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
+            nextLabel={submitting ? "Sending…" : "Get my AI trip plan →"}
+            nextDisabled={submitting || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
           />
           <p className="mt-3 text-[11.5px] text-white/40">
             Free during beta · No credit card · we're hand-onboarding our first 50 trips

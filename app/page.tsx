@@ -9,12 +9,12 @@ import { FEATURED_IDS } from "@/lib/featured";
 import featuredCoords from "@/lib/featured-coords.json";
 import { Compass, MapPin, MessageSquare, Sparkles } from "lucide-react";
 
-// Hero background photo. Unsplash CDN with WebP + size params for fast LCP.
-// TODO: swap with an NPS public-domain photo (no attribution required,
-// commercial-safe) — Half Dome at sunset is the strongest fit for the
-// "you don't know the West Coast" positioning.
-const HERO_PHOTO_URL =
-  "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=2400&fm=webp&q=78&auto=format";
+// TODO: swap with an NPS public-domain photo (commercial-safe, no
+// attribution required) — Half Dome at sunset fits the positioning.
+const HERO_PHOTO_BASE = "https://images.unsplash.com/photo-1503614472-8c93d56e92ce";
+const heroPhotoAt = (w: number) => `${HERO_PHOTO_BASE}?w=${w}&fm=webp&q=78&auto=format`;
+const HERO_PHOTO_URL    = heroPhotoAt(2400);
+const HERO_PHOTO_SRCSET = [800, 1200, 1800, 2400].map((w) => `${heroPhotoAt(w)} ${w}w`).join(", ");
 const HERO_PHOTO_CREDIT = "Photo: Bailey Zindel / Unsplash";
 
 export const metadata: Metadata = {
@@ -51,30 +51,32 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-[#0a1612] text-white/90">
-      {/* Preload the hero LCP image so it starts downloading before paint.
-          Next.js hoists JSX <link> elements into <head>. */}
-      <link rel="preload" as="image" href={HERO_PHOTO_URL} />
+      {/* Preload the hero LCP image; the preloader needs srcset/sizes too,
+          otherwise mobile downloads the 2400px version then again at the
+          right width. */}
+      <link
+        rel="preload"
+        as="image"
+        href={HERO_PHOTO_URL}
+        imageSrcSet={HERO_PHOTO_SRCSET}
+        imageSizes="100vw"
+      />
 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
 
-      {/* HERO — fills the first viewport exactly. min-height uses 100dvh
-          where supported (modern iOS Safari, Chrome) so address-bar
-          collapse doesn't leave a gap. Content is flex-centered so the
-          headline + CTA sit in the visual sweet spot rather than at the
-          top edge.
-          Photo: real <img> + object-cover handles any aspect ratio at
-          any breakpoint. Two stacked dark-tint overlays for legibility
-          (left side ~70% black for the text column, right side lighter
-          to let the photo breathe). */}
+      {/* dvh fallback so iOS Safari's collapsing address bar doesn't
+          leave a gap at the bottom of the hero. */}
       <section
         id="plan"
         className="relative flex items-center overflow-hidden border-b border-white/[0.06] min-h-[calc(100vh-3.5rem)] [min-height:calc(100dvh-3.5rem)]"
       >
         <img
           src={HERO_PHOTO_URL}
+          srcSet={HERO_PHOTO_SRCSET}
+          sizes="100vw"
           alt=""
           aria-hidden
           fetchPriority="high"
@@ -99,6 +101,9 @@ export default function LandingPage() {
         />
 
         <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-12 sm:py-16">
+          {/* Heavy multi-layer text-shadow on every hero string — Moraine
+              Lake's bright halves (water reflection, sky) wash out plain
+              white at the photo's middle. */}
           <p
             className="text-[11px] font-bold uppercase tracking-[0.2em] text-forest-200 sm:text-[12px]"
             style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
@@ -142,7 +147,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* WHY US — 3 VALUE PROPS */}
       <section className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300/90">
@@ -168,10 +172,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURED TRAILS GRID — Style F cards with GPS traces colored by
-          difficulty. Coordinates pre-extracted at build time into
-          lib/featured-coords.json so we don't ship the 7 MB simplified
-          geometries bundle to the landing page. */}
+      {/* Coords pre-extracted into lib/featured-coords.json so we don't
+          ship the 7 MB simplified geometries bundle for 6 cards. */}
       <section className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <div className="flex items-baseline justify-between">
@@ -195,7 +197,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300/90">
@@ -218,8 +219,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER CTA + LINKS. Single button back to the hero wizard —
-          no duplicate form. The hero already does the lead capture. */}
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="rounded-2xl border border-forest-300/20 bg-gradient-to-br from-forest-500/[0.10] to-ember-500/[0.05] p-8 text-center sm:p-12">
           <h2 className="font-display text-3xl leading-tight text-white sm:text-4xl">
