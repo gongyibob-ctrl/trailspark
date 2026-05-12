@@ -46,6 +46,16 @@ const USER_LINE_SOURCE_ID = "user-trail-lines";
 const USER_LINE_LAYER = "user-trail-line";
 const USER_LINE_LAYER_SELECTED = "user-trail-line-selected";
 
+// Imported (OSM community) trails render as a clustered point source.
+// Featured trails keep their HTML markers — only the 1,700+ imports are
+// aggregated so the West-Coast view doesn't drown in pins.
+const IMPORTED_SOURCE_ID  = "imported-trails";
+const IMPORTED_CLUSTER_LAYER = "imported-clusters";
+const IMPORTED_COUNT_LAYER   = "imported-cluster-count";
+const IMPORTED_POINT_LAYER   = "imported-points";
+const IMPORTED_CLUSTER_MAX_ZOOM = 11; // above this, individual points show
+const IMPORTED_CLUSTER_RADIUS   = 60; // px
+
 // Inline SVG glyphs used inside the pin. Hand-tuned for legibility at 9–12 px;
 // stroke comes from CSS, white needle fill is set inline.
 //   Multi-day  → tent (A-frame triangle + center pole)
@@ -219,6 +229,27 @@ export default function Map({
     [trails, geomVersion],
   );
 
+  // Point geometry for imported trails, fed into the clustered source.
+  // Featured trails are deliberately excluded — they still render as HTML
+  // markers because the editorial product wants them individually visible.
+  const importedPointsGeoJSON = useMemo<GeoJSON.FeatureCollection>(() => ({
+    type: "FeatureCollection",
+    features: trails
+      .filter((t) => t.tier === "imported")
+      .map((t) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [t.trailhead.lng, t.trailhead.lat],
+        },
+        properties: {
+          id: t.id,
+          name: t.name,
+          difficulty: t.difficulty,
+        },
+      })),
+  }), [trails]);
+
   // init map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -243,18 +274,6 @@ export default function Map({
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-left");
-
-    // Imported (community) pins reveal only when the user is zoomed in past
-    // park scale — keeps the default cross-coast view from clogging with
-    // 1,700+ small pins. Threshold 10 is roughly "single park visible."
-    const ZOOM_REVEAL_IMPORTED = 10;
-    const updateRevealClass = () => {
-      const container = containerRef.current;
-      if (!container) return;
-      container.classList.toggle("show-imported-pins", map.getZoom() >= ZOOM_REVEAL_IMPORTED);
-    };
-    map.on("zoom", updateRevealClass);
-    map.on("load", updateRevealClass);
 
     // Wildfire layer setup helper — runs after style load
     const addWildfireLayers = async () => {
@@ -456,6 +475,110 @@ export default function Map({
         });
       }
 
+      // Imported-trails clustered source: 1,700+ community routes aggregate
+      // into bubbles at low zoom, break apart on click + zoom-in.
+      if (!map.getSource(IMPORTED_SOURCE_ID)) {
+        map.addSource(IMPORTED_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] }, // filled by sync effect below
+          cluster: true,
+          clusterMaxZoom: IMPORTED_CLUSTER_MAX_ZOOM,
+          clusterRadius: IMPORTED_CLUSTER_RADIUS,
+        });
+
+        // Cluster bubbles — size + tone step up with count.
+        map.addLayer({
+          id: IMPORTED_CLUSTER_LAYER,
+          type: "circle",
+          source: IMPORTED_SOURCE_ID,
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": [
+              "step", ["get", "point_count"],
+              "#7c5fa3",       // 1–29
+              30,  "#6a4c93",  // 30–99
+              100, "#5a3a87",  // 100–299
+              300, "#4a2f7a",  // 300+
+            ],
+            "circle-radius": [
+              "step", ["get", "point_count"],
+              16,
+              30,  22,
+              100, 30,
+              300, 38,
+            ],
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "rgba(255, 255, 255, 0.45)",
+            "circle-opacity": 0.88,
+          },
+        });
+
+        // Cluster count label (white bold over the bubble).
+        map.addLayer({
+          id: IMPORTED_COUNT_LAYER,
+          type: "symbol",
+          source: IMPORTED_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-font": ["Noto Sans Bold"],
+            "text-size": [
+              "step", ["get", "point_count"],
+              12,
+              30, 13,
+              100, 14,
+              300, 15,
+            ],
+            "text-allow-overlap": true,
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+
+        // Unclustered individual points — visible once clusters break apart.
+        map.addLayer({
+          id: IMPORTED_POINT_LAYER,
+          type: "circle",
+          source: IMPORTED_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-color": "#8b5cf6",
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 7],
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": "rgba(255, 255, 255, 0.55)",
+            "circle-opacity": 0.85,
+          },
+        });
+
+        // Click on a cluster — zoom in to the level where it breaks apart.
+        map.on("click", IMPORTED_CLUSTER_LAYER, async (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: [IMPORTED_CLUSTER_LAYER] });
+          const feature = features[0];
+          if (!feature) return;
+          const clusterId = feature.properties?.cluster_id;
+          const source = map.getSource(IMPORTED_SOURCE_ID) as maplibregl.GeoJSONSource;
+          try {
+            const zoom = await source.getClusterExpansionZoom(clusterId);
+            const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+            map.easeTo({ center: coords, zoom, duration: 700 });
+          } catch (err) {
+            console.warn("[imported-cluster] expansion zoom failed:", err);
+          }
+        });
+
+        // Click on an individual imported point — select that trail.
+        map.on("click", IMPORTED_POINT_LAYER, (e) => {
+          const id = e.features?.[0]?.properties?.id as string | undefined;
+          if (id) onSelectRef.current(id);
+        });
+
+        map.on("mouseenter", IMPORTED_CLUSTER_LAYER, () => { map.getCanvas().style.cursor = "pointer"; });
+        map.on("mouseleave", IMPORTED_CLUSTER_LAYER, () => { map.getCanvas().style.cursor = ""; });
+        map.on("mouseenter", IMPORTED_POINT_LAYER,   () => { map.getCanvas().style.cursor = "pointer"; });
+        map.on("mouseleave", IMPORTED_POINT_LAYER,   () => { map.getCanvas().style.cursor = ""; });
+      }
+
       // Cursor + click on lines
       map.on("click", LINE_LAYER_BASE, (e) => {
         const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -516,6 +639,18 @@ export default function Map({
     else map.once("load", apply);
   }, [linesGeoJSON]);
 
+  // Push imported-trails point data into the clustered source.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const apply = () => {
+      const src = map.getSource(IMPORTED_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+      if (src) src.setData(importedPointsGeoJSON);
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once("load", apply);
+  }, [importedPointsGeoJSON]);
+
   // User-trail line data — syncs whenever uploads add/remove
   useEffect(() => {
     const map = mapRef.current;
@@ -547,16 +682,15 @@ export default function Map({
 
       const positions = spreadOverlapping(trails);
 
-      trails.forEach((trail) => {
+      // Imported trails render via the clustered point source above —
+      // skip them here so we don't double-draw a marker + a cluster point.
+      const markerTrails = trails.filter((t) => t.tier !== "imported");
+
+      markerTrails.forEach((trail) => {
         const lined = hasGeometry(trail.id);
-        const isImported = trail.tier === "imported";
 
         const el = document.createElement("div");
-        el.className = [
-          "trail-pin",
-          lined && "trail-pin-small",
-          isImported && "trail-pin-imported",
-        ].filter(Boolean).join(" ");
+        el.className = ["trail-pin", lined && "trail-pin-small"].filter(Boolean).join(" ");
         el.dataset.id = trail.id;
 
         const inner = document.createElement("div");
