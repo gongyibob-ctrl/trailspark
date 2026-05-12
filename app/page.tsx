@@ -4,18 +4,18 @@ import { TRAIL_BY_ID, CURATED_TRAILS } from "@/lib/trails";
 import { IMPORTED_TRAILS } from "@/lib/trails-imported";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { LandingHeroForm } from "@/components/LandingHeroForm";
+import { TrailCard } from "@/components/TrailCard";
+import { FEATURED_IDS } from "@/lib/featured";
+import featuredCoords from "@/lib/featured-coords.json";
 import { Compass, MapPin, MessageSquare, Sparkles } from "lucide-react";
 
-// Featured trails for the homepage grid. Hand-picked for visual variety and
-// name recognition across all West Coast regions.
-const FEATURED_IDS = [
-  "half-dome",
-  "skyline-paradise",
-  "hurricane-hill",
-  "garfield-peak",
-  "fern-canyon",
-  "ryan-mountain",
-];
+// Hero background photo. Unsplash CDN with WebP + size params for fast LCP.
+// TODO: swap with an NPS public-domain photo (no attribution required,
+// commercial-safe) — Half Dome at sunset is the strongest fit for the
+// "you don't know the West Coast" positioning.
+const HERO_PHOTO_URL =
+  "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=2400&fm=webp&q=78&auto=format";
+const HERO_PHOTO_CREDIT = "Photo: Bailey Zindel / Unsplash";
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — We design West Coast hiking trips for visitors`,
@@ -51,30 +51,48 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-[#0a1612] text-white/90">
+      {/* Preload the hero LCP image so it starts downloading before paint.
+          Next.js hoists JSX <link> elements into <head>. */}
+      <link rel="preload" as="image" href={HERO_PHOTO_URL} />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
 
-      {/* HERO */}
-      <section id="plan" className="relative overflow-hidden border-b border-white/[0.06]">
+      {/* HERO — full-bleed photo with dark gradient overlay (H1).
+          Preload hint is in the <head> via metadata so the LCP image
+          starts downloading before paint. */}
+      <section
+        id="plan"
+        className="relative overflow-hidden border-b border-white/[0.06]"
+      >
+        {/* Layered backgrounds: photo + diagonal overlay + side-gradient.
+            Stacked via background-image so we never end up with a single
+            <img> the form could paint over. */}
         <div
-          className="pointer-events-none absolute inset-0 -z-10 opacity-[0.18]"
+          aria-hidden
+          className="absolute inset-0 -z-10"
           style={{
-            background:
-              "radial-gradient(60% 60% at 70% 20%, #547d62 0%, transparent 60%), radial-gradient(60% 50% at 20% 80%, #ee7e3e 0%, transparent 60%)",
+            backgroundImage: `
+              linear-gradient(90deg, rgba(10,22,18,0.82) 0%, rgba(10,22,18,0.45) 55%, rgba(10,22,18,0.55) 100%),
+              linear-gradient(180deg, rgba(10,22,18,0.30) 0%, rgba(10,22,18,0.85) 100%),
+              url("${HERO_PHOTO_URL}")
+            `,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         />
-        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300/90">
+        <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+          <p className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
             Hand-crafted hiking trips · For visitors to the US West Coast
           </p>
-          <h1 className="mt-4 font-display text-5xl leading-[1.05] tracking-tight text-white sm:text-6xl">
+          <h1 className="mt-4 font-display text-5xl leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-[68px]">
             You don't know the West Coast.
             <br />
             <span className="text-forest-200">We do.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/70">
+          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-white/75">
             Tell us your dates and what kind of hiking trip you want.
             We pick the trails, plan the drives, handle the permits, sort
             the gear — and email you a hand-crafted day-by-day plan in 24 hours.
@@ -83,7 +101,7 @@ export default function LandingPage() {
           <div className="mt-8 max-w-2xl">
             <LandingHeroForm source="landing-hero" />
           </div>
-          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/55">
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-white/60">
             <Link href="/map" className="inline-flex items-center gap-1.5 hover:text-white">
               <MapPin className="h-4 w-4" /> Explore the map
             </Link>
@@ -91,6 +109,11 @@ export default function LandingPage() {
               <Compass className="h-4 w-4" /> Browse {CURATED_TRAILS.length + IMPORTED_TRAILS.length} trails
             </Link>
           </div>
+        </div>
+
+        {/* Photo credit — small, unobtrusive, bottom-right */}
+        <div className="absolute bottom-2 right-3 text-[10px] text-white/30">
+          {HERO_PHOTO_CREDIT}
         </div>
       </section>
 
@@ -120,11 +143,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURED TRAILS GRID */}
+      {/* FEATURED TRAILS GRID — Style F cards with GPS traces colored by
+          difficulty. Coordinates pre-extracted at build time into
+          lib/featured-coords.json so we don't ship the 7 MB simplified
+          geometries bundle to the landing page. */}
       <section className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300/90">
+            <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.18em] text-forest-300">
               Trails we know well
             </h2>
             <Link href="/trails" className="text-[13px] text-white/55 hover:text-white">
@@ -134,28 +160,10 @@ export default function LandingPage() {
           <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((t) => (
               <li key={t.id}>
-                <Link
-                  href={`/trails/${t.id}`}
-                  className="group block rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition hover:border-forest-300/30 hover:bg-white/[0.04]"
-                >
-                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-forest-300/85">
-                    {t.parkUnit}
-                  </div>
-                  <div className="mt-1.5 text-[17px] font-semibold text-white group-hover:text-forest-100">
-                    {t.name}
-                  </div>
-                  <div className="mt-3 flex items-center gap-3 text-[12px] text-white/55">
-                    <span>{t.lengthMiles} mi</span>
-                    <span className="text-white/20">·</span>
-                    <span>{t.elevationGainFt.toLocaleString()} ft gain</span>
-                    {t.scenery != null && (
-                      <>
-                        <span className="text-white/20">·</span>
-                        <span className="text-amber-300">{"★".repeat(t.scenery)}</span>
-                      </>
-                    )}
-                  </div>
-                </Link>
+                <TrailCard
+                  trail={t}
+                  coords={(featuredCoords as Record<string, number[][]>)[t.id]}
+                />
               </li>
             ))}
           </ul>
