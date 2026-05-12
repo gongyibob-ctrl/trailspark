@@ -60,16 +60,19 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
 
-      {/* HERO — full-bleed photo + dark overlay + step-by-step wizard CTA.
-          We use a real <img> (not CSS background-image) so the photo is
-          (a) trivially debuggable in DevTools Network, (b) immune to the
-          CSS-url() cache quirks that bit us earlier, and (c) able to use
-          object-cover + a sizes hint for responsive fetching. */}
+      {/* HERO — fills the first viewport exactly. min-height uses 100dvh
+          where supported (modern iOS Safari, Chrome) so address-bar
+          collapse doesn't leave a gap. Content is flex-centered so the
+          headline + CTA sit in the visual sweet spot rather than at the
+          top edge.
+          Photo: real <img> + object-cover handles any aspect ratio at
+          any breakpoint. Two stacked dark-tint overlays for legibility
+          (left side ~70% black for the text column, right side lighter
+          to let the photo breathe). */}
       <section
         id="plan"
-        className="relative overflow-hidden border-b border-white/[0.06]"
+        className="relative flex items-center overflow-hidden border-b border-white/[0.06] min-h-[calc(100vh-3.5rem)] [min-height:calc(100dvh-3.5rem)]"
       >
-        {/* Photo */}
         <img
           src={HERO_PHOTO_URL}
           alt=""
@@ -78,13 +81,12 @@ export default function LandingPage() {
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        {/* Overlay tints — separate divs so each gradient stacks predictably */}
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(10,22,18,0.72) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.20) 100%)",
+              "linear-gradient(90deg, rgba(10,22,18,0.75) 0%, rgba(10,22,18,0.30) 55%, rgba(10,22,18,0.22) 100%)",
           }}
         />
         <div
@@ -92,22 +94,19 @@ export default function LandingPage() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(10,22,18,0.12) 0%, rgba(10,22,18,0.55) 100%)",
+              "linear-gradient(180deg, rgba(10,22,18,0.15) 0%, rgba(10,22,18,0.60) 100%)",
           }}
         />
 
-        {/* Content. Typography uses heavy text-shadow so it stays readable
-            on the bright halves of the photo (Moraine Lake, snow, sky).
-            Without shadow, white-on-blue-water washes out. */}
-        <div className="relative z-10 mx-auto max-w-5xl px-6 py-24 sm:py-32">
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-12 sm:py-16">
           <p
-            className="text-[12px] font-bold uppercase tracking-[0.2em] text-forest-200"
+            className="text-[11px] font-bold uppercase tracking-[0.2em] text-forest-200 sm:text-[12px]"
             style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
           >
             AI-designed hiking trips · For visitors to the US West Coast
           </p>
           <h1
-            className="mt-4 font-display text-5xl leading-[1.02] tracking-tight text-white sm:text-6xl lg:text-[72px]"
+            className="mt-3 font-display text-[40px] leading-[1.04] tracking-tight text-white sm:mt-4 sm:text-[56px] sm:leading-[1.02] lg:text-[72px]"
             style={{ textShadow: "0 2px 20px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.45)" }}
           >
             You don't know the West Coast.
@@ -115,18 +114,18 @@ export default function LandingPage() {
             <span className="text-forest-200">We do.</span>
           </h1>
           <p
-            className="mt-6 max-w-2xl text-[17px] font-medium leading-relaxed text-white"
+            className="mt-5 max-w-2xl text-[15px] font-medium leading-relaxed text-white sm:mt-6 sm:text-[17px]"
             style={{ textShadow: "0 1px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)" }}
           >
             Tell us your dates. Our AI picks the trails, plans the drives,
             handles permits and gear — and emails you a complete day-by-day
             plan within 24 hours.
           </p>
-          <div className="mt-8 max-w-2xl">
+          <div className="mt-6 max-w-2xl sm:mt-8">
             <LandingTripWizard source="landing-hero" />
           </div>
           <div
-            className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium text-white/85"
+            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px] font-medium text-white/85 sm:mt-10 sm:text-[13px]"
             style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}
           >
             <Link href="/map" className="inline-flex items-center gap-1.5 hover:text-white">
@@ -138,7 +137,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Photo credit — small, unobtrusive, bottom-right */}
         <div className="absolute bottom-2 right-3 z-10 text-[10px] text-white/35">
           {HERO_PHOTO_CREDIT}
         </div>
