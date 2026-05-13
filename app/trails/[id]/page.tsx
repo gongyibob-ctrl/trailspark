@@ -88,13 +88,16 @@ export default function TrailPage({ params }: RouteParams) {
     ],
   };
 
+  // Two-level breadcrumb. Park unit (e.g. "Yosemite National Park") is
+  // visible in the on-page nav for context, but it's not a navigable
+  // page, so we leave it out of the JSON-LD — schema.org requires
+  // every non-last BreadcrumbList item to carry a real `item` URL.
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Trailspark", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: trail.parkUnit },
-      { "@type": "ListItem", position: 3, name: trail.name, item: url },
+      { "@type": "ListItem", position: 1, name: "All trails", item: `${SITE_URL}/trails` },
+      { "@type": "ListItem", position: 2, name: trail.name, item: url },
     ],
   };
 
